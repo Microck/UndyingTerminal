@@ -21,8 +21,16 @@
     }
   },
   "fonts": {
-    "family": "Fira Mono",
-    "weight": 400
+    "family": "Fira Sans",
+    "weight": 400,
+    "heading": {
+      "family": "Fira Sans",
+      "weight": 600
+    },
+    "body": {
+      "family": "Fira Sans",
+      "weight": 400
+    }
   },
   "seo": {
     "indexing": "all"
@@ -30,25 +38,22 @@
   "navbar": {
     "links": [
       {
-        "label": "GitHub",
-        "href": "https://github.com/Microck/UndyingTerminal"
+        "label": "Download",
+        "href": "https://github.com/Microck/UndyingTerminal/releases"
       }
     ],
     "primary": {
-      "type": "button",
-      "label": "Download",
-      "href": "https://github.com/Microck/UndyingTerminal/releases"
+      "type": "github",
+      "href": "https://github.com/Microck/UndyingTerminal"
     }
   },
   "navigation": {
     "global": {
       "anchors": [
         {
-          "anchor": "Community",
-          "href": "https://discord.gg/undyingterminal"
-        },
-        {
           "anchor": "GitHub",
+          "icon": "github",
+          "iconType": "brands",
           "href": "https://github.com/Microck/UndyingTerminal"
         }
       ]
@@ -121,7 +126,6 @@
   "footer": {
     "socials": {
       "github": "https://github.com/Microck/UndyingTerminal",
-      "discord": "https://discord.gg/undyingterminal",
       "twitter": "https://twitter.com/undyingterminal"
     }
   },
