@@ -20,7 +20,7 @@ The Undying Terminal client is the user-facing component that connects to persis
 Connect to an existing terminal session:
 
 ```powershell
-undying-terminal.exe --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e [OPTIONS]
+undying-terminal.exe --connect <HOST> <PORT> <CLIENT_ID> [OPTIONS]
 ```
 
 ### SSH Bootstrap
@@ -28,14 +28,14 @@ undying-terminal.exe --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID
 Start a remote terminal via SSH, then connect directly:
 
 ```powershell
-undying-terminal.exe --ssh \u003cHOST\u003e [OPTIONS]
+undying-terminal.exe --ssh <HOST> [OPTIONS]
 ```
 
 ## Options Reference
 
 ### Connection Options
 
-#### `--connect \u003cHOST\u003e \u003cPORT\u003e \u003cID\u003e`
+#### `--connect <HOST> <PORT> <ID>`
 
 Connect to existing terminal session.
 
@@ -49,7 +49,7 @@ Connect to existing terminal session.
 --connect 192.168.1.100 2022 abc123def456
 ```
 
-#### `--key \u003cPASSKEY\u003e`
+#### `--key <PASSKEY>`
 
 Authentication passkey for the session.
 
@@ -60,7 +60,7 @@ Authentication passkey for the session.
 --key 1234567890abcdef
 ```
 
-#### `--ssh \u003cHOST\u003e`
+#### `--ssh <HOST>`
 
 Bootstrap mode: SSH to host, start remote terminal, connect.
 
@@ -76,7 +76,7 @@ Bootstrap mode: SSH to host, start remote terminal, connect.
 4. Switches to direct TCP connection
 5. Maintains persistent session
 
-#### `-l, --login \u003cUSERNAME\u003e`
+#### `-l, --login <USERNAME>`
 
 SSH login username (used with `--ssh`).
 
@@ -85,7 +85,7 @@ SSH login username (used with `--ssh`).
 --ssh remote-server.com -l admin
 ```
 
-#### `--jumphost \u003cHOST\u003e, --jport \u003cPORT\u003e`
+#### `--jumphost <HOST>, --jport <PORT>`
 
 Connect through intermediate jump server.
 
@@ -102,13 +102,13 @@ Client → Jump Server → Destination Server → Destination Terminal
 
 ### Command Execution
 
-#### `-c, --command \u003cCOMMAND\u003e`
+#### `-c, --command <COMMAND>`
 
 Execute a single command and exit.
 
 **Format**: Command string with newline  
 **Example**:
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell PowerShell
 # Note: `r`n for cmd.exe newline
 --command "dir`r`n"
@@ -121,7 +121,7 @@ cd C:\projects
 npm run build`r`n
 "@
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 **Behavior**:
 - Sends command to session
@@ -145,7 +145,7 @@ Keep client running after command completes (interactive mode).
 
 ### Port Forwarding
 
-#### `-t, --tunnel \u003cSPEC\u003e`
+#### `-t, --tunnel <SPEC>`
 
 Forward tunnel (local → remote).
 
@@ -158,7 +158,7 @@ START-END:START-END
 ```
 
 **Examples**:
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Simple
 -t 8080:9090
 # localhost:8080 → remote:9090
@@ -178,14 +178,14 @@ START-END:START-END
 -t 8080-8085:9090-9095
 # 6 tunnels: 8080→9090, 8081→9091, ..., 8085→9095
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 **Multiple Tunnels**:
 ```powershell
 -t 5432:db:5432 -t 6379:redis:6379 -t 3000:api:3000
 ```
 
-#### `-r, --reversetunnel \u003cSPEC\u003e`
+#### `-r, --reversetunnel <SPEC>`
 
 Reverse tunnel (remote → local).
 
@@ -196,7 +196,7 @@ REMOTE:HOST:LOCAL
 ```
 
 **Examples**:
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Simple
 -r 3000:8000
 # Server listens on 3000 → client's localhost:8000
@@ -210,11 +210,11 @@ REMOTE:HOST:LOCAL
 ```powershell Multiple
 -r 8080:3000 -r 5432:5432 -r 6379:6379
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### Environment Variables
 
-#### `--environmentvariable \u003cNAME\u003e=\u003cVALUE\u003e`
+#### `--environmentvariable <NAME>=<VALUE>`
 
 Send environment variable to remote session.
 
@@ -234,7 +234,7 @@ Send environment variable to remote session.
 
 ### Basic Connection
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Interactive
 # Standard interactive session
 ./undying-terminal.exe `
@@ -250,11 +250,11 @@ Send environment variable to remote session.
   --key 1234567890abcdef `
   -c "dir C:\`r`n"
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### SSH Bootstrap
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Simple
 # SSH with username@host
 ./undying-terminal.exe --ssh user@remote-server.com
@@ -269,15 +269,15 @@ Send environment variable to remote session.
 # SSH on non-standard port (use standard SSH syntax)
 ./undying-terminal.exe --ssh user@remote-server.com:2222
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### Port Forwarding
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Database Access
 # Forward remote database to local port
 ./undying-terminal.exe `
-  --connect db-server.com 2022 \u003cID\u003e --key \u003cKEY\u003e `
+  --connect db-server.com 2022 <ID> --key <KEY> `
   -t 5432:postgres-internal:5432 `
   --noexit
 ```
@@ -285,7 +285,7 @@ Send environment variable to remote session.
 ```powershell Web Development
 # Forward multiple dev services
 ./undying-terminal.exe `
-  --connect dev-server.com 2022 \u003cID\u003e --key \u003cKEY\u003e `
+  --connect dev-server.com 2022 <ID> --key <KEY> `
   -t 3000:api:3000 `
   -t 8080:frontend:8080 `
   -t 6379:redis:6379 `
@@ -295,11 +295,11 @@ Send environment variable to remote session.
 ```powershell Reverse Tunnel (Expose Local)
 # Expose local web server to remote network
 ./undying-terminal.exe `
-  --connect remote-server.com 2022 \u003cID\u003e --key \u003cKEY\u003e `
+  --connect remote-server.com 2022 <ID> --key <KEY> `
   -r 8080:localhost:3000 `
   --noexit
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### Jumphost
 
@@ -477,36 +477,36 @@ tasklist | findstr undying-terminal.exe
 
 ## Next Steps
 
-\u003cCardGroup cols={2}\u003e
-  \u003cCard
+<CardGroup cols={2}>
+  <Card
     title="Server CLI Reference"
     icon="server"
     href="/api-reference/server-cli"
-  \u003e
+  >
     Server command-line options
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Terminal CLI Reference"
     icon="terminal"
     href="/api-reference/terminal-cli"
-  \u003e
+  >
     Terminal command-line options
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Configuration Guide"
     icon="gear"
     href="/config/server-config"
-  \u003e
+  >
     Configure server behavior
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Port Forwarding Guide"
     icon="right-left"
     href="/guides/port-forwarding"
-  \u003e
+  >
     Detailed tunnel examples
-  \u003c/Card\u003e
-\u003c/CardGroup\u003e
+  </Card>
+</CardGroup>

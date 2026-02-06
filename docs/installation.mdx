@@ -14,9 +14,9 @@ description: Detailed installation and setup instructions for Undying Terminal
 | **Disk Space** | 50 MB for binaries |
 | **Network** | TCP connectivity (port 2022 by default) |
 
-\u003cInfo\u003e
+<Info>
 ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
-\u003c/Info\u003e
+</Info>
 
 ### Recommended Requirements
 
@@ -27,25 +27,25 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
 
 ## Installation Methods
 
-\u003cTabs\u003e
-  \u003cTab title="Binary Release (Recommended)"\u003e
+<Tabs>
+  <Tab title="Binary Release (Recommended)">
     ### Download Pre-Built Binaries
     
-    \u003cSteps\u003e
-      \u003cStep title="Download"\u003e
-        Visit the [GitHub Releases](https://github.com/yourusername/undyingterminal/releases) page and download the latest `undying-terminal-X.X.X-win64.zip`.
-      \u003c/Step\u003e
+    <Steps>
+      <Step title="Download">
+        Visit the [GitHub Releases](https://github.com/Microck/UndyingTerminal/releases) page and download the latest `undying-terminal-X.X.X-win64.zip`.
+      </Step>
       
-      \u003cStep title="Extract"\u003e
+      <Step title="Extract">
         Extract the archive to your preferred location:
         
         ```powershell
         # PowerShell
         Expand-Archive -Path undying-terminal-1.0.0-win64.zip -DestinationPath "C:\Program Files\UndyingTerminal"
         ```
-      \u003c/Step\u003e
+      </Step>
       
-      \u003cStep title="Verify"\u003e
+      <Step title="Verify">
         Check that all executables are present:
         
         ```powershell
@@ -57,9 +57,9 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
         - `undying-terminal-server.exe` (server)
         - `undying-terminal-terminal.exe` (terminal)
         - Required DLLs (libsodium, OpenSSL, etc.)
-      \u003c/Step\u003e
+      </Step>
       
-      \u003cStep title="Add to PATH (Optional)"\u003e
+      <Step title="Add to PATH (Optional)">
         For system-wide access:
         
         ```powershell
@@ -72,15 +72,15 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
         # Refresh current session
         $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine')
         ```
-      \u003c/Step\u003e
-    \u003c/Steps\u003e
-  \u003c/Tab\u003e
+      </Step>
+    </Steps>
+  </Tab>
   
-  \u003cTab title="Build from Source"\u003e
+  <Tab title="Build from Source">
     ### Build from Source
     
-    \u003cSteps\u003e
-      \u003cStep title="Prerequisites"\u003e
+    <Steps>
+      <Step title="Prerequisites">
         Install required build tools:
         
         - Visual Studio 2019+ (with C++ Desktop Development workload)
@@ -95,16 +95,16 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
         .\bootstrap-vcpkg.bat
         .\vcpkg integrate install
         ```
-      \u003c/Step\u003e
+      </Step>
       
-      \u003cStep title="Clone Repository"\u003e
+      <Step title="Clone Repository">
         ```powershell
-        git clone https://github.com/yourusername/undyingterminal.git
+        git clone https://github.com/Microck/UndyingTerminal.git
         cd undyingterminal
         ```
-      \u003c/Step\u003e
+      </Step>
       
-      \u003cStep title="Install Dependencies"\u003e
+      <Step title="Install Dependencies">
         vcpkg will automatically install dependencies listed in `vcpkg.json`:
         
         - OpenSSL
@@ -115,9 +115,9 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
         # Automatic via CMake integration
         cmake --preset windows
         ```
-      \u003c/Step\u003e
+      </Step>
       
-      \u003cStep title="Build"\u003e
+      <Step title="Build">
         ```powershell
         # Configure
         cmake --preset windows
@@ -127,54 +127,54 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
         
         # Output will be in: build/Release/
         ```
-      \u003c/Step\u003e
+      </Step>
       
-      \u003cStep title="Run Tests (Optional)"\u003e
+      <Step title="Run Tests (Optional)">
         ```powershell
         cd build
         ctest -C Release --output-on-failure
         ```
-      \u003c/Step\u003e
-    \u003c/Steps\u003e
+      </Step>
+    </Steps>
     
-    \u003cNote\u003e
+    <Note>
     For MSYS2/MinGW builds, use the `windows-mingw-msys2` preset:
     
     ```bash
     cmake --preset windows-mingw-msys2
     cmake --build build-mingw
     ```
-    \u003c/Note\u003e
-  \u003c/Tab\u003e
+    </Note>
+  </Tab>
   
-  \u003cTab title="Package Manager (Future)"\u003e
+  <Tab title="Package Manager (Future)">
     ### Package Manager Installation
     
-    \u003cWarning\u003e
-    Not yet available. Track progress in [Issue #XXX](https://github.com/yourusername/undyingterminal/issues/XXX).
-    \u003c/Warning\u003e
+    <Warning>
+    Not yet available. Track progress on the [GitHub issues page](https://github.com/Microck/UndyingTerminal/issues).
+    </Warning>
     
     Future support planned for:
     - Chocolatey: `choco install undying-terminal`
     - Scoop: `scoop install undying-terminal`
     - WinGet: `winget install UndyingTerminal`
-  \u003c/Tab\u003e
-\u003c/Tabs\u003e
+  </Tab>
+</Tabs>
 
 ## Initial Setup
 
 ### 1. Server Setup
 
-\u003cSteps\u003e
-  \u003cStep title="Create Configuration Directory"\u003e
+<Steps>
+  <Step title="Create Configuration Directory">
     ```powershell
     # PowerShell (Run as Administrator)
     $configDir = "$env:PROGRAMDATA\UndyingTerminal"
     New-Item -ItemType Directory -Force -Path $configDir
     ```
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Create Configuration File"\u003e
+  <Step title="Create Configuration File">
     Create `ut.cfg` in the config directory:
     
     ```powershell
@@ -193,15 +193,15 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
     verbose=false
     
     # Optional: Shared encryption key (hex)
-    # shared_key_hex=\u003cgenerate-this\u003e
+    # shared_key_hex=<generate-this>
     "@ | Out-File -FilePath $configFile -Encoding ASCII
     ```
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Configure Firewall"\u003e
+  <Step title="Configure Firewall">
     Allow inbound connections on port 2022:
     
-    \u003cCodeGroup\u003e
+    <CodeGroup>
     ```powershell Automatic (Recommended)
     # Run server with --add-firewall once
     ./undying-terminal-server.exe --add-firewall
@@ -217,10 +217,10 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
       -Action Allow `
       -Profile Any
     ```
-    \u003c/CodeGroup\u003e
-  \u003c/Step\u003e
+    </CodeGroup>
+  </Step>
   
-  \u003cStep title="Start Server (Test)"\u003e
+  <Step title="Start Server (Test)">
     ```powershell
     ./undying-terminal-server.exe
     ```
@@ -231,14 +231,14 @@ ConPTY support requires Windows 10 Build 17763 (October 2018 Update) or later.
     [INFO] Server listening on 0.0.0.0:2022
     [INFO] Named pipe server started: \\.\pipe\undying-terminal
     ```
-  \u003c/Step\u003e
-\u003c/Steps\u003e
+  </Step>
+</Steps>
 
 ### 2. Windows Service Installation (Production)
 
 For production environments, run the server as a Windows service:
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Install Service
 # PowerShell (Run as Administrator)
 sc.exe create UndyingTerminalServer `
@@ -263,11 +263,11 @@ Get-Service UndyingTerminalServer | Format-List *
 sc.exe stop UndyingTerminalServer
 sc.exe delete UndyingTerminalServer
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
-\u003cTip\u003e
+<Tip>
 Service mode automatically handles job object cleanup and runs with system privileges.
-\u003c/Tip\u003e
+</Tip>
 
 ### 3. Client Setup
 
@@ -281,41 +281,41 @@ No special setup required for the client! Just run:
 
 ### Test Local Connection
 
-\u003cSteps\u003e
-  \u003cStep title="Start Server"\u003e
+<Steps>
+  <Step title="Start Server">
     ```powershell
     # Terminal 1
     ./undying-terminal-server.exe
     ```
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Start Terminal"\u003e
+  <Step title="Start Terminal">
     ```powershell
     # Terminal 2
     echo "test/ignored" | ./undying-terminal-terminal.exe
     ```
     
     Note the `client_id` and `passkey` from output.
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Connect Client"\u003e
+  <Step title="Connect Client">
     ```powershell
     # Terminal 3
     ./undying-terminal.exe `
-      --connect 127.0.0.1 2022 \u003cCLIENT_ID\u003e `
-      --key \u003cPASSKEY\u003e `
+      --connect 127.0.0.1 2022 <CLIENT_ID> `
+      --key <PASSKEY> `
       --noexit
     ```
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Test Session"\u003e
+  <Step title="Test Session">
     Type `dir` or `ls` and verify output appears.
-  \u003c/Step\u003e
-\u003c/Steps\u003e
+  </Step>
+</Steps>
 
-\u003cCheck\u003e
+<Check>
 If you see command output, installation is successful!
-\u003c/Check\u003e
+</Check>
 
 ## Network Configuration
 
@@ -323,8 +323,8 @@ If you see command output, installation is successful!
 
 To access the server from outside your local network:
 
-\u003cSteps\u003e
-  \u003cStep title="Find Server IP"\u003e
+<Steps>
+  <Step title="Find Server IP">
     ```powershell
     # Internal IP
     ipconfig | findstr IPv4
@@ -332,26 +332,26 @@ To access the server from outside your local network:
     # External IP (public)
     (Invoke-WebRequest -Uri "https://api.ipify.org").Content
     ```
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Configure Port Forwarding"\u003e
+  <Step title="Configure Port Forwarding">
     In your router:
     - Forward external port 2022 → internal IP:2022
     - Use TCP protocol
     - Enable the rule
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Test External Access"\u003e
+  <Step title="Test External Access">
     ```powershell
     # From external network
-    ./undying-terminal.exe --connect \u003cPUBLIC_IP\u003e 2022 \u003cCLIENT_ID\u003e --key \u003cPASSKEY\u003e
+    ./undying-terminal.exe --connect <PUBLIC_IP> 2022 <CLIENT_ID> --key <PASSKEY>
     ```
-  \u003c/Step\u003e
-\u003c/Steps\u003e
+  </Step>
+</Steps>
 
-\u003cWarning\u003e
+<Warning>
 **Security Recommendation**: Enable shared key encryption when exposing the server to the internet. See [Configuration → Encryption](/config/server-config#encryption).
-\u003c/Warning\u003e
+</Warning>
 
 ## Optional Enhancements
 
@@ -384,8 +384,8 @@ pacman -S mingw-w64-x86_64-cmake \
 
 ## Troubleshooting Installation
 
-\u003cAccordionGroup\u003e
-  \u003cAccordion title="Missing DLL errors"\u003e
+<AccordionGroup>
+  <Accordion title="Missing DLL errors">
     If you see errors like:
     ```
     The code execution cannot proceed because libsodium.dll was not found.
@@ -395,9 +395,9 @@ pacman -S mingw-w64-x86_64-cmake \
     - Ensure all DLLs from the release package are in the same directory as the executables
     - Check `PATH` includes the installation directory
     - Reinstall Visual C++ Redistributable (2015-2022)
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Build errors with vcpkg"\u003e
+  <Accordion title="Build errors with vcpkg">
     If CMake can't find dependencies:
     
     ```powershell
@@ -408,17 +408,17 @@ pacman -S mingw-w64-x86_64-cmake \
     # Point CMake to vcpkg
     cmake -DCMAKE_TOOLCHAIN_FILE=\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake ..
     ```
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="ConPTY not available"\u003e
+  <Accordion title="ConPTY not available">
     Error: `CreatePseudoConsole failed`
     
-    **Cause**: Windows version \u003c Build 17763
+    **Cause**: Windows version < Build 17763
     
     **Solution**: Update Windows to October 2018 Update (Build 17763) or later
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Port 2022 already in use"\u003e
+  <Accordion title="Port 2022 already in use">
     Check what's using the port:
     
     ```powershell
@@ -429,44 +429,44 @@ pacman -S mingw-w64-x86_64-cmake \
     - Kill the conflicting process
     - Change port in `ut.cfg`
     - Use `--port` flag: `./undying-terminal-server.exe --port 2023`
-  \u003c/Accordion\u003e
-\u003c/AccordionGroup\u003e
+  </Accordion>
+</AccordionGroup>
 
 ## Next Steps
 
-\u003cCardGroup cols={2}\u003e
-  \u003cCard
+<CardGroup cols={2}>
+  <Card
     title="Quick Start Guide"
     icon="rocket"
     href="/quickstart"
-  \u003e
+  >
     Start using Undying Terminal
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Server Configuration"
     icon="gear"
     href="/config/server-config"
-  \u003e
+  >
     Configure advanced server options
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Windows Service Setup"
     icon="windows"
     href="/guides/windows-service"
-  \u003e
+  >
     Run as a Windows service
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Building from Source"
     icon="code"
     href="/development/building"
-  \u003e
+  >
     Detailed build instructions
-  \u003c/Card\u003e
-\u003c/CardGroup\u003e
+  </Card>
+</CardGroup>
 
 ## System Integration Checklist
 

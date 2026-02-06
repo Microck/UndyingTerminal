@@ -168,7 +168,7 @@ Each terminal must use matching `UT_PIPE_NAME` to connect to the correct server.
 
 4. **Network reachable?**
    ```powershell
-   Test-NetConnection -ComputerName \u003cHOST\u003e -Port 2022
+   Test-NetConnection -ComputerName <HOST> -Port 2022
    ```
 
 5. **Encryption mismatch?**
@@ -295,7 +295,7 @@ Ctrl+D         # Sends EOF (may exit shell)
 1. **Enable encryption**:
    ```ini
    # ut.cfg
-   shared_key_hex=\u003crandom-32-byte-hex\u003e
+   shared_key_hex=<random-32-byte-hex>
    ```
 
 2. **Firewall rules**:
@@ -332,7 +332,7 @@ bind_ip=127.0.0.1  # Only accessible via VPN
 2. **Update server config**:
    ```ini
    # ut.cfg
-   shared_key_hex=\u003cNEW_KEY\u003e
+   shared_key_hex=<NEW_KEY>
    ```
 
 3. **Restart server**:
@@ -364,7 +364,7 @@ bind_ip=127.0.0.1  # Only accessible via VPN
 - SSH: 0.5-1ms overhead
 - Mosh: 1-3ms (with prediction)
 
-**Impact**: Imperceptible for interactive terminal use (\u003c5ms is instant to humans).
+**Impact**: Imperceptible for interactive terminal use (<5ms is instant to humans).
 
 ### How much bandwidth does it use?
 
@@ -408,7 +408,7 @@ bind_ip=127.0.0.1  # Only accessible via VPN
 ```powershell
 netstat -ano | findstr :2022
 # Note the PID, then:
-tasklist | findstr \u003cPID\u003e
+tasklist | findstr <PID>
 ```
 
 **Solutions**:
@@ -419,7 +419,7 @@ tasklist | findstr \u003cPID\u003e
 
 2. Kill conflicting process:
    ```powershell
-   Stop-Process -Id \u003cPID\u003e -Force
+   Stop-Process -Id <PID> -Force
    ```
 
 3. Use command-line override:
@@ -433,7 +433,7 @@ tasklist | findstr \u003cPID\u003e
 
 1. **Network latency**:
    ```powershell
-   ping \u003cserver-host\u003e
+   ping <server-host>
    # Check latency
    ```
 
@@ -504,7 +504,7 @@ Each connection maintains:
 - 64MB per direction (128MB total)
 - FIFO queue (oldest packets dropped)
 
-**Edge case**: If client disconnects for hours and server sends \u003e64MB, some packets are lost. By design (bounded memory).
+**Edge case**: If client disconnects for hours and server sends >64MB, some packets are lost. By design (bounded memory).
 
 ### Can I run the client on Linux?
 
@@ -536,7 +536,7 @@ ssh user@windows-server "cd /path && ./undying-terminal-terminal.exe"
 - AEAD encryption (authenticated)
 - Multi-server clustering
 
-**Community requests**: [GitHub Issues](https://github.com/yourusername/undyingterminal/issues)
+**Community requests**: [GitHub Issues](https://github.com/Microck/UndyingTerminal/issues)
 
 ### How can I contribute?
 
@@ -554,7 +554,7 @@ See [Contributing Guide](/development/contributing).
 ### Where can I get support?
 
 **Documentation**: https://undyingterminal.dev  
-**GitHub Issues**: https://github.com/yourusername/undyingterminal/issues  
+**GitHub Issues**: https://github.com/Microck/UndyingTerminal/issues  
 **Discord Community**: https://discord.gg/undyingterminal  
 
 **Before asking**:
