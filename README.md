@@ -1,9 +1,9 @@
 <div align="center">
-  <img src="assets/logo/UndyngTerminalLogo.svg" width="300" alt="undying terminal logo" />
+  <img src="assets/logo/UndyngTerminalLogo.svg" width="150" alt="undying terminal logo" />
   
-  <h1>undying terminal</h1>
+  <h1>Undying Terminal</h1>
   
-  <p><strong>persistent ssh sessions on windows. disconnects ok.</strong></p>
+  <p><strong>re-connectable secure remote shell, on Windows</strong></p>
 
   <p>
     <a href="LICENSE">
