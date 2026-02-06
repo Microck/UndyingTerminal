@@ -3,7 +3,7 @@
   
   <h1>Undying Terminal</h1>
   
-  <p><strong>re-connectable secure remote shell, on Windows</strong></p>
+  <p><strong>reconnectable secure remote shell, on Windows</strong></p>
 
   <p>
     <a href="LICENSE">
@@ -16,6 +16,10 @@
 
   <br />
 </div>
+
+- docs: https://undyingterminal.mintlify.app/
+- releases: https://github.com/Microck/UndyingTerminal/releases
+- issues: https://github.com/Microck/UndyingTerminal/issues
 
 ## what
 
@@ -30,11 +34,11 @@
 ```mermaid
 flowchart LR
   subgraph local_machine[local machine]
-    T[undying-terminal-terminal.exe\nconpty + shell] <-- named pipe --> S[undying-terminal-server.exe\nsession registry]
+    T[undying-terminal-terminal.exe<br/>conpty + shell] <-- named pipe --> S[undying-terminal-server.exe<br/>session registry]
   end
 
-  C[undying-terminal.exe\nclient] <-- tcp + crypto --> S
-  T --> SH[shell\ncmd.exe / powershell.exe]
+  C[undying-terminal.exe<br/>client] <-- tcp + crypto --> S
+  T --> SH[shell<br/>cmd.exe / powershell.exe]
 ```
 
 ## quick start (windows)
