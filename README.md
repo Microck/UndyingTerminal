@@ -17,6 +17,8 @@
   <br />
 </div>
 
+## quick links
+
 - docs: https://undyingterminal.mintlify.app/
 - releases: https://github.com/Microck/UndyingTerminal/releases
 - issues: https://github.com/Microck/UndyingTerminal/issues
@@ -28,6 +30,16 @@
 - session stays alive via keepalive + reconnect + recovery.
 - supports forward tunnels and reverse tunnels.
 - supports a jump host hop (client -> jump server -> destination).
+
+## why
+
+ssh sessions die at the worst times. close your laptop, switch wifi, flip a vpn, and your shell is gone.
+
+undying terminal assumes disconnects will happen and focuses on recovery:
+- the session stays alive on the server.
+- reconnecting replays missed output and keeps your shell state.
+
+if you just want the 5-minute setup, start here: https://undyingterminal.mintlify.app/quickstart
 
 ## how it works
 
@@ -44,7 +56,16 @@ flowchart LR
 ## quick start (windows)
 
 prereq
-- use windows terminal or cmd/powershell.
+- use windows terminal or cmd/powershell
+- windows 10 build 17763+ (conpty)
+- download the latest release binaries: https://github.com/Microck/UndyingTerminal/releases/latest
+
+install (once)
+- extract the zip somewhere like `C:\Program Files\UndyingTerminal`
+- optional: add that directory to your PATH
+- verify you have `undying-terminal.exe`, `undying-terminal-server.exe`, `undying-terminal-terminal.exe`
+
+full install guide: https://undyingterminal.mintlify.app/installation
 
 run
 
@@ -73,6 +94,28 @@ this starts a remote terminal over ssh, then connects to the local server.
 ```powershell
 ./undying-terminal.exe --ssh <host> -l <user>
 ```
+
+more: https://undyingterminal.mintlify.app/guides/ssh-bootstrap
+
+## build from source
+
+prereq
+- visual studio 2019+ (c++ desktop development workload)
+- cmake 3.20+
+- ninja
+- vcpkg (included in this repo under `vcpkg/`)
+
+```powershell
+git clone https://github.com/Microck/UndyingTerminal.git
+cd UndyingTerminal
+
+.\vcpkg\bootstrap-vcpkg.bat
+
+cmake --preset windows-vcpkg-static
+cmake --build --preset windows-vcpkg-static
+```
+
+full build notes: https://undyingterminal.mintlify.app/installation
 
 ## jumphost
 
@@ -104,6 +147,8 @@ sequenceDiagram
 note
 - you only need `UT_PIPE_NAME` when running multiple servers on one machine (dev).
 
+more: https://undyingterminal.mintlify.app/guides/jumphost
+
 ## tunnels
 
 forward tunnels
@@ -111,6 +156,8 @@ forward tunnels
 
 reverse tunnels
 - `-r/--reversetunnel`: server listens; when hit, it requests the client to connect to a destination and shuttles data.
+
+more: https://undyingterminal.mintlify.app/guides/port-forwarding
 
 ## config
 
@@ -129,11 +176,28 @@ env
 - `UT_PIPE_NAME` override named pipe path (dev / multi-server).
 - `UT_DEBUG_HANDSHAKE=1` prints packet-level debug.
 
+more: https://undyingterminal.mintlify.app/config/server-config
+
+## troubleshooting
+
+start with:
+- https://undyingterminal.mintlify.app/troubleshooting/common-issues
+- https://undyingterminal.mintlify.app/troubleshooting/faq
+
+and if you need logs:
+
+```powershell
+$env:UT_DEBUG_HANDSHAKE=1
+./undying-terminal.exe --connect ...
+```
+
 ## limitations (still missing)
 
 - ssh config parsing (proxyjump/localforward)
 - ssh-agent forwarding
 - server cleanup on pipe disconnect
+
+track work in issues: https://github.com/Microck/UndyingTerminal/issues
 
 ## license
 
