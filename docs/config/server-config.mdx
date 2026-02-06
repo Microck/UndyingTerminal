@@ -451,7 +451,7 @@ Get-Content server.log -Wait -Tail 20
 |--------|---------|--------------|
 | Active Connections | `netstat -ano \| findstr :2022 \| measure` | 0-1000s |
 | Memory Usage | `tasklist /fi "imagename eq undying-terminal-server.exe"` | ~50MB + (5MB × sessions) |
-| CPU Usage | Task Manager | under 5% idle, under 20% under load |
+| CPU Usage | Task Manager | &lt;5% idle, &lt;20% under load |
 
 ## Backup and Recovery
 
