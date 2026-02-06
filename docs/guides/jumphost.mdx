@@ -1,0 +1,48 @@
+---
+title: "Jumphost"
+description: "Use a bastion host to reach private machines and keep sessions persistent across disconnects."
+---
+
+## When to use a jumphost
+
+Use a jumphost (bastion host) when your target machine is only reachable from a private network, but you have SSH access to an internet-reachable host inside (or adjacent to) that network.
+
+## Basic SSH jump
+
+Use OpenSSH's jump option:
+
+```bash
+ssh -J user@jumphost user@target
+```
+
+If you need a non-standard port for the jumphost:
+
+```bash
+ssh -J user@jumphost:2222 user@target
+```
+
+## Recommended SSH config
+
+Add host aliases to `~/.ssh/config`:
+
+```sshconfig
+Host bastion
+  HostName jumphost.example.com
+  User user
+
+Host target
+  HostName 10.0.0.10
+  User user
+  ProxyJump bastion
+```
+
+Then connect with:
+
+```bash
+ssh target
+```
+
+## Notes
+
+- If you also need port forwarding, see the Port forwarding guide.
+- If your connection is unstable, Undying Terminal's session persistence helps you avoid losing long-running commands when the underlying SSH transport drops.

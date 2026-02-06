@@ -1,0 +1,9 @@
+# Local-only and planning artifacts
+mint.json
+mint.json.backup
+mintlify.log
+
+DEPLOYMENT_CHECKLIST.md
+DEPLOYMENT_STATUS.md
+THEME_NOTE.md
+CONTINUATION_SESSION_SUMMARY.md

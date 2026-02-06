@@ -1,0 +1,189 @@
+---
+title: Introduction to Undying Terminal
+description: Persistent SSH sessions on Windows that survive network interruptions
+---
+
+## Welcome to Undying Terminal
+
+Undying Terminal is a **Windows-native persistent terminal solution** that keeps your SSH sessions alive through network disconnects, VPN switches, laptop sleep, and other interruptions that would normally kill your terminal session.
+
+\u003cimg
+  className="block"
+  src="/images/hero.png"
+  alt="Undying Terminal Hero"
+/\u003e
+
+## The Problem We Solve
+
+Traditional SSH sessions are fragile. They break when:
+
+- Your network connection drops
+- Your laptop goes to sleep
+- You switch VPN connections
+- You change WiFi networks
+- Your connection times out
+
+**Result**: Lost work, interrupted processes, and frustration.
+
+## The Undying Terminal Solution
+
+Undying Terminal implements a **client-server-terminal architecture** with:
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard title="Automatic Reconnection" icon="rotate"\u003e
+    Detects disconnects and reconnects seamlessly with exponential backoff
+  \u003c/Card\u003e
+  
+  \u003cCard title="Session Recovery" icon="shield-check"\u003e
+    Sequence-based protocol recovers missed packets (up to 64MB buffer)
+  \u003c/Card\u003e
+  
+  \u003cCard title="End-to-End Encryption" icon="lock"\u003e
+    Optional XSalsa20 encryption via libsodium for secure communication
+  \u003c/Card\u003e
+  
+  \u003cCard title="SSH Bootstrap" icon="terminal"\u003e
+    Start remote terminals over SSH, then maintain them over TCP
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e
+
+## Key Features
+
+### Persistent Sessions
+Your terminal stays alive even when:
+- Network disconnects occur
+- Laptop sleeps/wakes
+- VPN switches happen
+- WiFi changes
+
+### Port Forwarding
+\u003cCodeGroup\u003e
+```powershell Forward Tunnels
+# Local 8080 → Remote 9090
+./undying-terminal.exe --connect 127.0.0.1 2022 \u003cid\u003e -t 8080:9090
+```
+
+```powershell Reverse Tunnels
+# Server listens on 3000, client connects to local service
+./undying-terminal.exe --connect 127.0.0.1 2022 \u003cid\u003e -r 3000:localhost:8000
+```
+\u003c/CodeGroup\u003e
+
+### Jumphost Support
+Connect through intermediate jump servers:
+
+```mermaid
+flowchart LR
+    C[Client] --\u003e J[Jump Server]
+    J --\u003e D[Destination]
+    style C fill:#fc6505
+    style J fill:#3e4954,color:#fff
+    style D fill:#3e4954,color:#fff
+```
+
+### Keepalive & Recovery
+- Automatic heartbeat packets (default 5s)
+- Detects dead connections (3 missed → reconnect)
+- Sequence-based recovery (resends missed packets)
+
+## Architecture
+
+Undying Terminal consists of three components:
+
+\u003cSteps\u003e
+  \u003cStep title="Server"\u003e
+    **undying-terminal-server.exe**
+    
+    Central session manager listening on TCP (default port 2022). Maintains client registry and handles authentication.
+  \u003c/Step\u003e
+  
+  \u003cStep title="Terminal"\u003e
+    **undying-terminal-terminal.exe**
+    
+    ConPTY-based terminal that spawns shell processes and connects to the server via named pipe.
+  \u003c/Step\u003e
+  
+  \u003cStep title="Client"\u003e
+    **undying-terminal.exe**
+    
+    User-facing client that handles I/O, reconnection, tunnels, and SSH bootstrap.
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+## Use Cases
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Remote Development" icon="code"\u003e
+    Keep long-running build processes alive even when your network drops. Perfect for remote development workflows where interruptions are costly.
+  \u003c/Accordion\u003e
+
+  \u003cAccordion title="System Administration" icon="server"\u003e
+    Maintain persistent connections to remote servers during system updates, backups, or maintenance tasks that take hours.
+  \u003c/Accordion\u003e
+
+  \u003cAccordion title="Mobile/Unstable Networks" icon="wifi"\u003e
+    Work from coffee shops, trains, or mobile hotspots without losing your terminal sessions when switching networks.
+  \u003c/Accordion\u003e
+
+  \u003cAccordion title="Laptop Users" icon="laptop"\u003e
+    Close your laptop lid mid-session without losing your work. Sessions survive sleep/wake cycles.
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+## Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Windows 10+ | Fully Supported | Primary target platform |
+| Windows Server 2019+ | Fully Supported | Service mode available |
+| Linux | Planned | Server/terminal components |
+| macOS | Planned | Future support |
+
+\u003cNote\u003e
+Currently Windows-only, but architecture is designed for cross-platform expansion.
+\u003c/Note\u003e
+
+## Performance Characteristics
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Recovery Buffer | 64MB | Packets stored for catchup |
+| Keepalive Interval | 5s (configurable) | Heartbeat frequency |
+| Reconnect Backoff | 100ms → 2000ms | Exponential backoff |
+| Missed Heartbeats | 3 before disconnect | Configurable threshold |
+
+## Next Steps
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard
+    title="Quick Start"
+    icon="rocket"
+    href="/quickstart"
+  \u003e
+    Get up and running in 5 minutes
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Installation Guide"
+    icon="download"
+    href="/installation"
+  \u003e
+    Detailed installation instructions
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Architecture Deep Dive"
+    icon="diagram-project"
+    href="/architecture/overview"
+  \u003e
+    Understand how it works under the hood
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Configuration"
+    icon="gear"
+    href="/config/server-config"
+  \u003e
+    Configure server and client options
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e

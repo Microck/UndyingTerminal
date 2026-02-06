@@ -1,0 +1,680 @@
+---
+title: Common Issues
+description: Solutions to frequently encountered problems
+---
+
+## Connection Issues
+
+### Client Can't Connect to Server
+
+**Symptoms**:
+- `Connection refused`
+- `Connection timeout`
+- `Failed to connect`
+
+\u003cSteps\u003e
+  \u003cStep title="Verify Server is Running"\u003e
+    ```powershell
+    # Check if server is listening
+    netstat -ano | findstr :2022
+    
+    # Should show:
+    # TCP    0.0.0.0:2022    0.0.0.0:0    LISTENING    \u003cPID\u003e
+    ```
+    
+    If not listening:
+    ```powershell
+    # Start server
+    ./undying-terminal-server.exe
+    ```
+  \u003c/Step\u003e
+  
+  \u003cStep title="Check Firewall"\u003e
+    ```powershell
+    # Windows Firewall
+    Get-NetFirewallRule | Where-Object {$_.DisplayName -like "*Undying*"}
+    
+    # If no rule exists:
+    ./undying-terminal-server.exe --add-firewall
+    ```
+    
+    **Third-party firewalls**: Add exception for `undying-terminal-server.exe` on port 2022
+  \u003c/Step\u003e
+  
+  \u003cStep title="Test Network Connectivity"\u003e
+    ```powershell
+    # Test if port is reachable
+    Test-NetConnection -ComputerName \u003cHOST\u003e -Port 2022
+    
+    # Should show:
+    # TcpTestSucceeded : True
+    ```
+    
+    If fails:
+    - Check router port forwarding
+    - Check network path (VPN, proxy)
+    - Try localhost first (`127.0.0.1`)
+  \u003c/Step\u003e
+  
+  \u003cStep title="Verify Credentials"\u003e
+    Client ID and passkey must match exactly:
+    
+    ```powershell
+    # Terminal output when started:
+    [TERMINAL] Client ID: abc123def456
+    [TERMINAL] Passkey: 1234567890abcdef
+    
+    # Client must use exact values:
+    --connect \u003cHOST\u003e 2022 abc123def456 --key 1234567890abcdef
+    ```
+    
+    **Common mistakes**:
+    - Wrong client ID (typo)
+    - Wrong passkey (case-sensitive hex)
+    - Using old credentials (terminal restarted)
+  \u003c/Step\u003e
+  
+  \u003cStep title="Check Encryption Mismatch"\u003e
+    Server and client must agree on encryption:
+    
+    ```powershell
+    # Server config (ut.cfg)
+    shared_key_hex=abc123...
+    
+    # Client MUST use same key
+    # If server has key, client needs it
+    # If server has NO key, client shouldn't try to encrypt
+    ```
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+\u003cWarning title="Debug Mode"\u003e
+Still stuck? Enable debug logging:
+
+```powershell
+$env:UT_DEBUG_HANDSHAKE = 1
+./undying-terminal.exe --connect ...
+```
+
+Look for specific error messages in output.
+\u003c/Warning\u003e
+
+### Authentication Failed - Invalid Passkey
+
+**Error**: `ConnectResponse(status=INVALID_KEY)`
+
+**Cause**: Passkey mismatch between client and server
+
+**Solutions**:
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Solution 1: Verify Passkey"\u003e
+    Get passkey from terminal output:
+    
+    ```powershell
+    # When terminal starts:
+    echo "test" | ./undying-terminal-terminal.exe
+    
+    # Output:
+    [TERMINAL] Client ID: abc123def456
+    [TERMINAL] Passkey: 1234567890abcdef  \u003c-- Use this EXACT value
+    ```
+    
+    Use exact hex string in client:
+    ```powershell
+    --key 1234567890abcdef
+    ```
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Solution 2: Restart Terminal"\u003e
+    If terminal was restarted, passkey changed:
+    
+    ```powershell
+    # 1. Stop old terminal (if running)
+    taskkill /IM undying-terminal-terminal.exe /F
+    
+    # 2. Start fresh
+    echo "test" | ./undying-terminal-terminal.exe
+    
+    # 3. Note NEW client ID and passkey
+    # 4. Update client connection command
+    ```
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Solution 3: Check Encryption Key"\u003e
+    If server uses encryption, ensure it's configured:
+    
+    ```ini
+    # Server: ut.cfg
+    shared_key_hex=\u003ckey\u003e
+    ```
+    
+    Mismatch will cause authentication to fail silently.
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+### Session Won't Reconnect After Disconnect
+
+**Symptoms**:
+- Client exits instead of reconnecting
+- `Session terminated` message
+- No automatic retry
+
+**Causes & Solutions**:
+
+| Cause | Solution |
+|-------|----------|
+| **Terminal process died** | Restart terminal: `echo "test" \| ./undying-terminal-terminal.exe` |
+| **Server crashed** | Restart server: `./undying-terminal-server.exe` |
+| **Passkey changed** | Terminal restarted → passkey changed → use new passkey |
+| **Network path broken** | Check VPN, proxy, routing |
+| **Client in one-shot mode** | Don't use `-c` without `--noexit` for interactive sessions |
+
+**Debug**:
+```powershell
+# Check if terminal is alive
+tasklist | findstr undying-terminal-terminal
+
+# Check if server is alive
+tasklist | findstr undying-terminal-server
+
+# Check network
+Test-NetConnection \u003cHOST\u003e -Port 2022
+```
+
+## Performance Issues
+
+### High Latency / Slow Response
+
+**Symptoms**:
+- Keystrokes appear after delay
+- Slow command output
+- Laggy terminal
+
+\u003cSteps\u003e
+  \u003cStep title="Measure Network Latency"\u003e
+    ```powershell
+    ping \u003cserver-host\u003e
+    
+    # Check:
+    # - Average latency (should be \u003c100ms for good experience)
+    # - Packet loss (should be 0%)
+    ```
+    
+    **Expected**:
+    - LAN: 1-5ms
+    - Internet: 20-100ms
+    - International: 100-300ms
+    
+    **If high**:
+    - Check network path (tracert)
+    - Check bandwidth (speedtest)
+    - Consider closer server
+  \u003c/Step\u003e
+  
+  \u003cStep title="Check Recovery Buffer"\u003e
+    After reconnect, large buffer replay causes delay:
+    
+    ```powershell
+    # Enable debug to see catchup size
+    $env:UT_DEBUG_HANDSHAKE = 1
+    ./undying-terminal.exe --connect ...
+    
+    # Look for:
+    # [DEBUG] Sending catchup: X bytes
+    ```
+    
+    **If large** (\u003e10MB):
+    - Wait for catchup to complete
+    - Future: Reduce keepalive frequency (recompile needed)
+  \u003c/Step\u003e
+  
+  \u003cStep title="Check Server Load"\u003e
+    ```powershell
+    # On server machine:
+    tasklist | findstr undying-terminal-server
+    
+    # Check:
+    # - Memory usage (should be \u003c500MB for \u003c100 sessions)
+    # - CPU usage (should be \u003c10% idle)
+    ```
+    
+    **If high**:
+    - Reduce concurrent sessions
+    - Add more RAM/CPU
+    - Check for runaway terminal processes
+  \u003c/Step\u003e
+  
+  \u003cStep title="Disable Encryption (Test)"\u003e
+    Temporarily disable encryption to isolate issue:
+    
+    ```ini
+    # ut.cfg
+    # shared_key_hex=...  \u003c-- Comment out
+    ```
+    
+    Restart server and test. If faster, encryption overhead is the issue (should be \u003c1ms though).
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+### Memory Usage Growing
+
+**Symptoms**:
+- Server memory increases over time
+- Eventually crashes or slows down
+
+**Causes**:
+
+1. **Recovery Buffer Growth** (expected)
+   - Each session: up to 128MB (64MB × 2 directions)
+   - 10 sessions: up to 1.28GB
+   - **Normal behavior**
+
+2. **Memory Leak** (bug)
+   - Stale sessions not cleaned up
+   - Known issue: Server doesn't clean up on pipe disconnect
+
+**Solutions**:
+
+\u003cCodeGroup\u003e
+```powershell Monitor Memory
+# Check memory usage
+Get-Process undying-terminal-server | Select-Object PM,VM,WS
+
+# PM (Private Memory): Actual usage
+# Normal: 50MB + (5MB × active_sessions)
+```
+
+```powershell Restart Server (Workaround)
+# Schedule periodic restart (daily/weekly)
+$action = New-ScheduledTaskAction `
+  -Execute "PowerShell.exe" `
+  -Argument "-Command Restart-Service UndyingTerminalServer"
+
+$trigger = New-ScheduledTaskTrigger -Daily -At 3am
+
+Register-ScheduledTask `
+  -TaskName "Restart Undying Terminal Server" `
+  -Action $action `
+  -Trigger $trigger
+```
+
+```powershell Clean Stale Sessions
+# Manually kill stale terminal processes
+tasklist | findstr undying-terminal-terminal
+# Kill PIDs with no active connection
+```
+\u003c/CodeGroup\u003e
+
+## Terminal Issues
+
+### Shell Exits Unexpectedly
+
+**Symptoms**:
+- Terminal process terminates
+- Session ends
+- Must restart terminal
+
+**Common Causes**:
+
+| Cause | Trigger | Prevention |
+|-------|---------|------------|
+| **User exits shell** | `exit`, `Ctrl+D` | Never exit shell, disconnect client instead |
+| **Shell crash** | Syntax error, segfault | Fix script errors |
+| **ConPTY error** | Windows bug | Update Windows |
+| **Terminal timeout** | Idle too long | Keep client connected or use screen/tmux |
+
+**Solution**: Restart terminal
+```powershell
+echo "test" | ./undying-terminal-terminal.exe
+# Note new client ID and passkey
+```
+
+### Garbled Output / Encoding Issues
+
+**Symptoms**:
+- Special characters appear as `?` or boxes
+- Colors broken
+- Line wrapping wrong
+
+**Solutions**:
+
+\u003cTabs\u003e
+  \u003cTab title="UTF-8 Encoding"\u003e
+    ```powershell
+    # PowerShell: Set output encoding
+    $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
+    
+    # CMD: Use UTF-8 code page
+    chcp 65001
+    ```
+  \u003c/Tab\u003e
+  
+  \u003cTab title="Terminal Resize"\u003e
+    ```powershell
+    # Resize client terminal window
+    # ConPTY should auto-adjust
+    
+    # If not working, send resize signal manually:
+    # (Not yet implemented - resize on window change only)
+    ```
+  \u003c/Tab\u003e
+  
+  \u003cTab title="Clear Screen"\u003e
+    ```powershell
+    # CMD
+    cls
+    
+    # PowerShell
+    clear
+    
+    # Bash (if using)
+    reset
+    ```
+  \u003c/Tab\u003e
+\u003c/Tabs\u003e
+
+### Colors Not Working
+
+**Cause**: ConPTY virtual terminal sequences not enabled
+
+**Solution**:
+
+```powershell
+# PowerShell: Enable VT100
+[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
+$PSStyle.OutputRendering = 'Ansi'
+
+# CMD: Already supported in Windows 10+
+```
+
+## Configuration Issues
+
+### Config File Not Loading
+
+**Symptoms**:
+- Server uses default values
+- Changes in `ut.cfg` ignored
+
+**Checklist**:
+
+1. **Correct location**:
+   ```powershell
+   # Should be:
+   $env:PROGRAMDATA\UndyingTerminal\ut.cfg
+   # Usually:
+   C:\ProgramData\UndyingTerminal\ut.cfg
+   ```
+
+2. **File permissions**:
+   ```powershell
+   # Check if server can read file
+   Get-Acl "$env:PROGRAMDATA\UndyingTerminal\ut.cfg"
+   ```
+
+3. **File format**:
+   ```ini
+   # Correct:
+   port=2022
+   
+   # Incorrect:
+   port = 2022  # No spaces around =
+   "port"=2022  # No quotes
+   ```
+
+4. **Server restart**:
+   ```powershell
+   # Config only read on startup
+   Restart-Service UndyingTerminalServer
+   # OR
+   # Kill and restart manually
+   ```
+
+### Port Already in Use
+
+**Error**: `bind: address already in use`
+
+\u003cSteps\u003e
+  \u003cStep title="Find Process Using Port"\u003e
+    ```powershell
+    netstat -ano | findstr :2022
+    # TCP    0.0.0.0:2022    ...    LISTENING    \u003cPID\u003e
+    
+    tasklist | findstr \u003cPID\u003e
+    ```
+  \u003c/Step\u003e
+  
+  \u003cStep title="Choose Solution"\u003e
+    **Option A**: Kill the process
+    ```powershell
+    Stop-Process -Id \u003cPID\u003e -Force
+    ```
+    
+    **Option B**: Change port
+    ```ini
+    # ut.cfg
+    port=2023
+    ```
+    
+    **Option C**: Command-line override
+    ```powershell
+    ./undying-terminal-server.exe --port 2023
+    ```
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+### Named Pipe Errors
+
+**Error**: `Failed to connect to named pipe`
+
+**Causes**:
+
+1. **Server not running**:
+   ```powershell
+   netstat -ano | findstr :2022
+   # Should show LISTENING
+   ```
+
+2. **Wrong pipe name**:
+   ```powershell
+   # Server uses:
+   $env:UT_PIPE_NAME = "\\\\.\\pipe\\undying-terminal-custom"
+   
+   # Terminal MUST use same:
+   $env:UT_PIPE_NAME = "\\\\.\\pipe\\undying-terminal-custom"
+   echo "test" | ./undying-terminal-terminal.exe
+   ```
+
+3. **Permission denied**:
+   - Run as same user as server
+   - Or grant permissions (advanced)
+
+## Tunnel / Port Forwarding Issues
+
+### Tunnel Not Working
+
+**Symptoms**:
+- Connection to forwarded port fails
+- `Connection refused` on tunnel
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Forward Tunnel: Connection Refused"\u003e
+    ```powershell
+    # Client: -t 8080:remote-service:9090
+    # Trying: localhost:8080
+    # Error: Connection refused
+    ```
+    
+    **Checklist**:
+    1. Service running on remote? `netstat -ano | findstr :9090` (on server)
+    2. Firewall blocking? Check server firewall rules
+    3. Correct destination? Try `telnet remote-service 9090` from server
+    4. Tunnel established? Check client output for tunnel messages
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Reverse Tunnel: Not Accessible"\u003e
+    ```powershell
+    # Client: -r 3000:localhost:8000
+    # Server should listen on 3000
+    # But connection fails
+    ```
+    
+    **Checklist**:
+    1. Server listening? `netstat -ano | findstr :3000` (on server)
+    2. Local service running? `netstat -ano | findstr :8000` (on client)
+    3. Client connected? Session must be active
+    4. Firewall on server? Check inbound rules for port 3000
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Port Already in Use"\u003e
+    ```bash
+    Error: bind: address already in use
+    ```
+    
+    **Forward tunnel**: Local port already used
+    ```powershell
+    # Find what's using the port
+    netstat -ano | findstr :8080
+    
+    # Choose different local port
+    -t 8081:remote:9090  # Changed 8080 → 8081
+    ```
+    
+    **Reverse tunnel**: Server port already used
+    ```powershell
+    # On server, find conflicting process
+    netstat -ano | findstr :3000
+    
+    # Choose different remote port
+    -r 3001:localhost:8000  # Changed 3000 → 3001
+    ```
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+### Tunnel Breaks After Reconnect
+
+**Expected Behavior**: Active TCP connections through tunnels **do not survive** client reconnects.
+
+**Why**: Both ends of TCP connection must be preserved. When client disconnects:
+- Client-side connections drop
+- Server-side connections drop
+- Applications must reconnect
+
+**Workaround**: Design applications with reconnect logic
+
+**What DOES survive**: Tunnel infrastructure (listeners restart automatically)
+
+## Windows-Specific Issues
+
+### ConPTY Errors
+
+**Error**: `CreatePseudoConsole failed`
+
+**Cause**: Windows version \u003c Build 17763
+
+**Solution**: Update Windows
+```powershell
+# Check version
+winver
+
+# Required: Windows 10 Build 17763+ (October 2018)
+# Update via Windows Update
+```
+
+### Service Won't Start
+
+**Error**: `The service did not respond to the start or control request in a timely fashion`
+
+**Solutions**:
+
+1. **Check service config**:
+   ```powershell
+   sc.exe query UndyingTerminalServer
+   ```
+
+2. **Check binary path**:
+   ```powershell
+   sc.exe qc UndyingTerminalServer
+   # binPath should be correct
+   ```
+
+3. **Check permissions**:
+   - Service runs as SYSTEM by default
+   - Config file must be readable by SYSTEM
+
+4. **Check logs**:
+   ```powershell
+   # Event Viewer → Windows Logs → Application
+   # Look for UndyingTerminalServer errors
+   ```
+
+### DLL Missing Errors
+
+**Error**: `The code execution cannot proceed because libsodium.dll was not found`
+
+**Cause**: Required DLLs not in PATH or binary directory
+
+**Solution**:
+
+```powershell
+# Copy DLLs to binary directory
+Copy-Item "C:\path\to\deps\*.dll" "C:\Program Files\UndyingTerminal\"
+
+# Or add to PATH
+$path = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+$newPath = "$path;C:\path\to\deps"
+[Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')
+```
+
+**Required DLLs**:
+- `libsodium.dll`
+- `libcrypto-*.dll` (OpenSSL)
+- `libssl-*.dll` (OpenSSL)
+
+## Getting More Help
+
+### Enable Verbose Logging
+
+```powershell
+# Server: Edit ut.cfg
+verbose=true
+
+# Client: Environment variable
+$env:UT_DEBUG_HANDSHAKE = 1
+
+# Run and capture output
+./undying-terminal.exe --connect ... \u003e client.log 2\u003e&1
+```
+
+### Collect Diagnostic Information
+
+Before reporting issues:
+
+```powershell
+# 1. Version info
+./undying-terminal.exe --version
+
+# 2. Windows version
+winver
+
+# 3. Network status
+netstat -ano | findstr :2022
+Test-NetConnection \u003cHOST\u003e -Port 2022
+
+# 4. Process list
+tasklist | findstr undying
+
+# 5. Logs (if verbose=true)
+Get-Content server.log -Tail 50
+```
+
+### Report a Bug
+
+Include in your report:
+1. Steps to reproduce
+2. Expected behavior
+3. Actual behavior
+4. Diagnostic information (above)
+5. Error messages (full output)
+
+**GitHub Issues**: https://github.com/yourusername/undyingterminal/issues
