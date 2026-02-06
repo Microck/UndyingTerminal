@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-protobuf
+            mingw-w64-ucrt-x86_64-libsodium
+            zip
+
+      - name: Configure CMake
+        shell: msys2 {0}
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_C_COMPILER=gcc
+
+      - name: Build
+        shell: msys2 {0}
+        run: cmake --build build --config Release
+
+      - name: Run Tests
+        shell: msys2 {0}
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Package release
+        shell: msys2 {0}
+        run: |
+          mkdir -p release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64
+          cp build/undying-terminal.exe release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
+          cp build/undying-terminal-server.exe release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
+          cp build/undying-terminal-terminal.exe release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
+          cp LICENSE release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
+          cp README.md release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
+          # Copy runtime DLLs
+          ldd build/undying-terminal.exe | grep ucrt64 | awk '{print $3}' | xargs -I{} cp {} release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/ 2>/dev/null || true
+          cd release && zip -r undying-terminal-${{ steps.version.outputs.VERSION }}-win64.zip undying-terminal-${{ steps.version.outputs.VERSION }}-win64
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
