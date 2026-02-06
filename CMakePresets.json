@@ -1,0 +1,58 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "linux-dev",
+      "displayName": "Linux dev (deps off)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "UNDYING_TERMINAL_REQUIRE_DEPS": "OFF"
+      }
+    },
+    {
+      "name": "windows-vcpkg-static",
+      "displayName": "Windows vcpkg x64-windows-static",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+        "UNDYING_TERMINAL_REQUIRE_DEPS": "ON"
+      }
+    },
+    {
+      "name": "windows-mingw-msys2",
+      "displayName": "Windows MinGW MSYS2",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build-mingw",
+      "cacheVariables": {
+        "UNDYING_TERMINAL_REQUIRE_DEPS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux-dev",
+      "configurePreset": "linux-dev",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-vcpkg-static",
+      "configurePreset": "windows-vcpkg-static",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-mingw-msys2",
+      "configurePreset": "windows-mingw-msys2",
+      "configuration": "Release",
+      "jobs": 1
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "linux-dev",
+      "configurePreset": "linux-dev"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+# build outputs
+build/
+build-*/
+
+# local release artifacts
+release/
+
+# misc
+*.log
+logs/
+
+# internal tooling
+.opencode/
+.planning/
+.tmp/
+PROMPT.md
+HANDOFF.md
+ralph-loop.local.md
+
+# vcpkg build artifacts
+vcpkg/buildtrees/
+vcpkg/downloads/
+vcpkg/packages/
+vcpkg/installed/
+
+# local deps cache
+deps/
+
+# generated protobuf in build/ is source in this repo
+build/*
+!build/ET.pb.cc
+!build/ET.pb.h
+!build/ETerminal.pb.cc
+!build/ETerminal.pb.h
