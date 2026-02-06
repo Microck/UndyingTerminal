@@ -10,18 +10,18 @@ Undying Terminal implements a **three-component distributed architecture** desig
 ```mermaid
 graph TB
     subgraph "Client Machine"
-        C[undying-terminal.exe\nClient]
+        C[undying-terminal.exe<br/>Client]
     end
     
     subgraph "Server Machine"
-        S[undying-terminal-server.exe\nSession Manager]
-        T[undying-terminal-terminal.exe\nPTY + Shell]
+        S[undying-terminal-server.exe<br/>Session Manager]
+        T[undying-terminal-terminal.exe<br/>PTY + Shell]
         
         S ---|Named Pipe| T
     end
     
     C ---|TCP + Encryption| S
-    T ---|Spawns| SH[Shell Process\ncmd.exe / powershell]
+    T ---|Spawns| SH[Shell Process<br/>cmd.exe / powershell]
     
     style C fill:#fc6505,color:#fff
     style S fill:#3e4954,color:#fff
