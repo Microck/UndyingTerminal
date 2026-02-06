@@ -1,0 +1,507 @@
+---
+title: Port Forwarding
+description: Forward local and remote ports through persistent sessions
+---
+
+## Overview
+
+Undying Terminal supports **two types of port forwarding** to tunnel TCP traffic through your persistent session:
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard title="Forward Tunnels (-t)" icon="arrow-right"\u003e
+    Client opens local port → forwards to remote destination
+    
+    **Use case**: Access remote services locally
+  \u003c/Card\u003e
+  
+  \u003cCard title="Reverse Tunnels (-r)" icon="arrow-left"\u003e
+    Server opens port → client connects to local destination
+    
+    **Use case**: Expose local services remotely
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e
+
+Both tunnel types **survive disconnects** and automatically reconnect, making them ideal for unstable networks.
+
+## Forward Tunnels
+
+### Basic Syntax
+
+```powershell
+./undying-terminal.exe `
+  --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e `
+  --key \u003cPASSKEY\u003e `
+  -t \u003cLOCAL_PORT\u003e:\u003cREMOTE_HOST\u003e:\u003cREMOTE_PORT\u003e
+```
+
+### Examples
+
+\u003cCodeGroup\u003e
+```powershell Simple Forward
+# Forward local 8080 → remote 9090
+./undying-terminal.exe `
+  --connect 192.168.1.100 2022 abc123 `
+  --key mypasskey `
+  -t 8080:9090
+
+# Access via: http://localhost:8080 → remote:9090
+```
+
+```powershell Explicit Bind
+# Forward local 8080 → specific remote host:port
+./undying-terminal.exe `
+  --connect 192.168.1.100 2022 abc123 `
+  --key mypasskey `
+  -t 8080:database.internal:5432
+
+# Access via: localhost:8080 → database.internal:5432
+```
+
+```powershell Port Range
+# Forward multiple ports (8080-8085 → 9090-9095)
+./undying-terminal.exe `
+  --connect 192.168.1.100 2022 abc123 `
+  --key mypasskey `
+  -t 8080-8085:9090-9095
+
+# Creates 6 tunnels:
+# 8080 → 9090, 8081 → 9091, ..., 8085 → 9095
+```
+
+```powershell Custom Bind Address
+# Bind to specific interface (not just localhost)
+./undying-terminal.exe `
+  --connect 192.168.1.100 2022 abc123 `
+  --key mypasskey `
+  -t 192.168.1.50:8080:remote:9090
+
+# Access via: 192.168.1.50:8080 → remote:9090
+```
+\u003c/CodeGroup\u003e
+
+### How Forward Tunnels Work
+
+```mermaid
+sequenceDiagram
+    participant L as Local App
+    participant C as Client (listener on 8080)
+    participant S as Server
+    participant R as Remote Service (9090)
+    
+    L-\u003e\u003eC: Connect to localhost:8080
+    C-\u003e\u003eS: PORT_FORWARD_DATA(socketid=1, data)
+    S-\u003e\u003eR: Connect to remote:9090
+    S-\u003e\u003eR: Forward data
+    R-\u003e\u003eS: Response
+    S-\u003e\u003eC: PORT_FORWARD_DATA(socketid=1, response)
+    C-\u003e\u003eL: Forward response
+```
+
+\u003cSteps\u003e
+  \u003cStep title="Client Opens Listener"\u003e
+    Client starts TCP listener on specified local port (e.g., 8080)
+  \u003c/Step\u003e
+  
+  \u003cStep title="Local Connection Established"\u003e
+    Local application connects to `localhost:8080`
+  \u003c/Step\u003e
+  
+  \u003cStep title="Tunnel Request Sent"\u003e
+    Client sends `PORT_FORWARD_DESTINATION_REQUEST` to server with:
+    - Source: `localhost:8080`
+    - Destination: `remote:9090`
+    - Socket ID: unique identifier
+  \u003c/Step\u003e
+  
+  \u003cStep title="Server Connects to Destination"\u003e
+    Server establishes TCP connection to `remote:9090`
+  \u003c/Step\u003e
+  
+  \u003cStep title="Bidirectional Relay"\u003e
+    All traffic flows through the session:
+    - Local → Client → Server → Remote
+    - Remote → Server → Client → Local
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+### Use Cases
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Database Access" icon="database"\u003e
+    Forward remote database to local port:
+    
+    ```powershell
+    # PostgreSQL
+    -t 5432:db.internal:5432
+    
+    # MySQL
+    -t 3306:mysql.internal:3306
+    
+    # Redis
+    -t 6379:redis.internal:6379
+    ```
+    
+    Connect with local tools:
+    ```powershell
+    psql -h localhost -p 5432 -U user
+    ```
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Web Development" icon="code"\u003e
+    Access remote development servers:
+    
+    ```powershell
+    # Forward remote webpack dev server
+    -t 8080:localhost:8080
+    
+    # Forward remote API server
+    -t 3000:api.dev:3000
+    ```
+    
+    Access via browser: `http://localhost:8080`
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Internal Services" icon="network-wired"\u003e
+    Access services behind firewall:
+    
+    ```powershell
+    # Kubernetes dashboard
+    -t 8001:k8s-master:8001
+    
+    # Grafana
+    -t 3000:monitoring.internal:3000
+    
+    # Jenkins
+    -t 8080:ci.internal:8080
+    ```
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+## Reverse Tunnels
+
+### Basic Syntax
+
+```powershell
+./undying-terminal.exe `
+  --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e `
+  --key \u003cPASSKEY\u003e `
+  -r \u003cREMOTE_PORT\u003e:\u003cLOCAL_HOST\u003e:\u003cLOCAL_PORT\u003e
+```
+
+### Examples
+
+\u003cCodeGroup\u003e
+```powershell Simple Reverse
+# Server listens on 3000, forwards to client's localhost:8000
+./undying-terminal.exe `
+  --connect 192.168.1.100 2022 abc123 `
+  --key mypasskey `
+  -r 3000:localhost:8000
+
+# Remote access via: server:3000 → client's localhost:8000
+```
+
+```powershell Expose Local Service
+# Expose local web server to remote network
+./undying-terminal.exe `
+  --connect remote-server.com 2022 abc123 `
+  --key mypasskey `
+  -r 8080:localhost:3000
+
+# Remote users access: http://remote-server.com:8080
+```
+
+```powershell Multiple Reverse Tunnels
+# Expose multiple services
+./undying-terminal.exe `
+  --connect remote-server.com 2022 abc123 `
+  --key mypasskey `
+  -r 8080:localhost:3000 `
+  -r 9090:localhost:5000 `
+  -r 5432:localhost:5432
+```
+\u003c/CodeGroup\u003e
+
+### How Reverse Tunnels Work
+
+```mermaid
+sequenceDiagram
+    participant R as Remote User
+    participant S as Server (listener on 3000)
+    participant C as Client
+    participant L as Local Service (8000)
+    
+    R-\u003e\u003eS: Connect to server:3000
+    S-\u003e\u003eC: PORT_FORWARD_DESTINATION_REQUEST(socketid=1)
+    C-\u003e\u003eL: Connect to localhost:8000
+    R-\u003e\u003eS: Send data
+    S-\u003e\u003eC: PORT_FORWARD_DATA(socketid=1, data)
+    C-\u003e\u003eL: Forward data
+    L-\u003e\u003eC: Response
+    C-\u003e\u003eS: PORT_FORWARD_DATA(socketid=1, response)
+    S-\u003e\u003eR: Forward response
+```
+
+\u003cSteps\u003e
+  \u003cStep title="Server Opens Listener"\u003e
+    Server starts TCP listener on specified remote port (e.g., 3000)
+  \u003c/Step\u003e
+  
+  \u003cStep title="Remote Connection Established"\u003e
+    Remote user connects to `server:3000`
+  \u003c/Step\u003e
+  
+  \u003cStep title="Destination Request Sent"\u003e
+    Server sends `PORT_FORWARD_DESTINATION_REQUEST` to client with socket ID
+  \u003c/Step\u003e
+  
+  \u003cStep title="Client Connects Locally"\u003e
+    Client establishes connection to specified local destination (e.g., `localhost:8000`)
+  \u003c/Step\u003e
+  
+  \u003cStep title="Bidirectional Relay"\u003e
+    Traffic flows:
+    - Remote → Server → Client → Local
+    - Local → Client → Server → Remote
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+### Use Cases
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Development Webhooks" icon="webhook"\u003e
+    Expose local dev server for webhooks (GitHub, Stripe, etc.):
+    
+    ```powershell
+    # Expose local:3000 to internet via remote server
+    -r 80:localhost:3000
+    ```
+    
+    Configure webhook URL: `http://remote-server.com:80/webhook`
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Demo/Staging" icon="presentation-screen"\u003e
+    Share local development with team:
+    
+    ```powershell
+    # Expose local React app
+    -r 8080:localhost:3000
+    ```
+    
+    Team access: `http://remote-server.com:8080`
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Remote Desktop / VNC" icon="desktop"\u003e
+    Access local machine from remote network:
+    
+    ```powershell
+    # RDP
+    -r 3389:localhost:3389
+    
+    # VNC
+    -r 5900:localhost:5900
+    
+    # SSH to local machine
+    -r 2222:localhost:22
+    ```
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+## Multiple Tunnels
+
+Combine forward and reverse tunnels:
+
+```powershell
+./undying-terminal.exe `
+  --connect server.com 2022 abc123 `
+  --key mypasskey `
+  -t 5432:db.internal:5432 `          # Forward: local DB access
+  -t 6379:redis.internal:6379 `       # Forward: local Redis access
+  -r 8080:localhost:3000 `             # Reverse: expose local web server
+  -r 9090:localhost:5000               # Reverse: expose local API
+```
+
+## Tunnel Syntax Reference
+
+### Format Options
+
+| Syntax | Description | Example |
+|--------|-------------|---------|
+| `LOCAL:REMOTE` | Simple: local port → remote port | `-t 8080:9090` |
+| `LOCAL:HOST:REMOTE` | Explicit: local port → remote host:port | `-t 8080:db:5432` |
+| `BIND:LOCAL:HOST:REMOTE` | Full: bind IP, local port → remote host:port | `-t 0.0.0.0:8080:db:5432` |
+| `START-END:START-END` | Range: multiple ports | `-t 8080-8085:9090-9095` |
+
+### Bind Addresses
+
+| Address | Behavior |
+|---------|----------|
+| `localhost` (default) | Only accessible from local machine |
+| `0.0.0.0` | Accessible from any interface |
+| `192.168.1.x` | Accessible from specific interface |
+| `127.0.0.1` | Explicit localhost |
+
+\u003cWarning\u003e
+**Security**: Binding to `0.0.0.0` exposes the tunnel to your network. Use with caution!
+\u003c/Warning\u003e
+
+## Tunnel Persistence
+
+Tunnels **survive disconnects**:
+
+\u003cSteps\u003e
+  \u003cStep title="Initial Connection"\u003e
+    Client connects, tunnels established
+  \u003c/Step\u003e
+  
+  \u003cStep title="Network Interruption"\u003e
+    Network drops, client disconnects
+  \u003c/Step\u003e
+  
+  \u003cStep title="Automatic Reconnect"\u003e
+    Client reconnects automatically
+  \u003c/Step\u003e
+  
+  \u003cStep title="Tunnels Restored"\u003e
+    All tunnels re-established transparently
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+\u003cCheck\u003e
+Active connections through tunnels are **not preserved** during disconnect. However, new connections work immediately after reconnect.
+\u003c/Check\u003e
+
+## Environment Variable Forwarding
+
+Forward environment variables through tunnels:
+
+```powershell
+# Forward based on env var
+$env:MY_SERVICE_PORT = "8080:remote-service:9090"
+./undying-terminal.exe ... -t $env:MY_SERVICE_PORT
+```
+
+Useful for scripting and automation.
+
+## Troubleshooting
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Tunnel not working - connection refused"\u003e
+    **Symptoms**: Local/remote service unreachable
+    
+    **Diagnosis**:
+    1. Verify service is running:
+       ```powershell
+       # On destination machine
+       netstat -ano | findstr :9090
+       ```
+    2. Check firewall rules
+    3. Verify bind address (localhost vs 0.0.0.0)
+    
+    **Solution**: Ensure destination service is accessible from server
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Port already in use"\u003e
+    **Error**: `bind: address already in use`
+    
+    **Diagnosis**:
+    ```powershell
+    netstat -ano | findstr :8080
+    ```
+    
+    **Solution**: 
+    - Choose different local port
+    - Kill process using the port
+    - Use specific bind address (not 0.0.0.0)
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Slow tunnel performance"\u003e
+    **Symptoms**: High latency, slow transfers
+    
+    **Causes**:
+    - Network bandwidth limitation
+    - Multiple packet hops
+    - Large recovery buffer replay
+    
+    **Solutions**:
+    - Use direct network path when possible
+    - Reduce keepalive frequency
+    - Check network quality (ping, traceroute)
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Tunnel breaks after reconnect"\u003e
+    **Expected Behavior**: Active connections drop, new connections work
+    
+    **Explanation**: TCP connections can't survive both endpoints changing. Undying Terminal restores the tunnel infrastructure, but application-level connections must be re-established.
+    
+    **Workaround**: Applications should implement reconnect logic
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+## Best Practices
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard title="Security" icon="shield"\u003e
+    - Use `localhost` bind when possible
+    - Enable encryption for internet-facing tunnels
+    - Restrict server firewall rules
+    - Use strong passkeys
+  \u003c/Card\u003e
+  
+  \u003cCard title="Performance" icon="gauge-high"\u003e
+    - Minimize tunnel hops (use direct paths)
+    - Use port ranges for efficiency
+    - Monitor bandwidth usage
+    - Test latency impact
+  \u003c/Card\u003e
+  
+  \u003cCard title="Reliability" icon="circle-check"\u003e
+    - Design for reconnect (don't rely on persistent connections)
+    - Use health checks in applications
+    - Log tunnel status
+    - Monitor connection stability
+  \u003c/Card\u003e
+  
+  \u003cCard title="Organization" icon="list"\u003e
+    - Document tunnel mappings
+    - Use consistent port conventions
+    - Group related tunnels
+    - Version tunnel configurations
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e
+
+## Next Steps
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard
+    title="Jumphost Guide"
+    icon="server"
+    href="/guides/jumphost"
+  \u003e
+    Connect through intermediate servers
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="SSH Bootstrap"
+    icon="terminal"
+    href="/guides/ssh-bootstrap"
+  \u003e
+    Start remote sessions over SSH
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Client CLI Reference"
+    icon="rectangle-terminal"
+    href="/api-reference/client-cli"
+  \u003e
+    Full CLI options
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Architecture"
+    icon="diagram-project"
+    href="/architecture/overview"
+  \u003e
+    How tunnels work internally
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e

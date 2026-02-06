@@ -1,0 +1,512 @@
+---
+title: Client CLI Reference
+description: Complete command-line interface reference for undying-terminal client
+---
+
+## Synopsis
+
+```bash
+undying-terminal.exe [OPTIONS]
+```
+
+## Description
+
+The Undying Terminal client is the user-facing component that connects to persistent terminal sessions. It handles interactive I/O, automatic reconnection, port forwarding, and SSH bootstrap.
+
+## Connection Modes
+
+### Direct Connection
+
+Connect to an existing terminal session:
+
+```powershell
+undying-terminal.exe --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e [OPTIONS]
+```
+
+### SSH Bootstrap
+
+Start a remote terminal via SSH, then connect directly:
+
+```powershell
+undying-terminal.exe --ssh \u003cHOST\u003e [OPTIONS]
+```
+
+## Options Reference
+
+### Connection Options
+
+#### `--connect \u003cHOST\u003e \u003cPORT\u003e \u003cID\u003e`
+
+Connect to existing terminal session.
+
+**Arguments**:
+- `HOST`: Server hostname or IP address
+- `PORT`: Server port number (typically 2022)
+- `ID`: Client ID (from terminal output)
+
+**Example**:
+```powershell
+--connect 192.168.1.100 2022 abc123def456
+```
+
+#### `--key \u003cPASSKEY\u003e`
+
+Authentication passkey for the session.
+
+**Required**: Yes (with `--connect`)  
+**Format**: Hexadecimal string  
+**Example**:
+```powershell
+--key 1234567890abcdef
+```
+
+#### `--ssh \u003cHOST\u003e`
+
+Bootstrap mode: SSH to host, start remote terminal, connect.
+
+**Example**:
+```powershell
+--ssh user@remote-server.com
+```
+
+**Behavior**:
+1. Spawns `ssh` to connect to host
+2. Executes `undying-terminal-terminal` remotely
+3. Extracts client ID and passkey from output
+4. Switches to direct TCP connection
+5. Maintains persistent session
+
+#### `-l, --login \u003cUSERNAME\u003e`
+
+SSH login username (used with `--ssh`).
+
+**Example**:
+```powershell
+--ssh remote-server.com -l admin
+```
+
+#### `--jumphost \u003cHOST\u003e, --jport \u003cPORT\u003e`
+
+Connect through intermediate jump server.
+
+**Example**:
+```powershell
+--connect jump-server.com 2022 jump-id --key jump-key `
+  --jumphost destination-server.com --jport 2022
+```
+
+**Flow**:
+```
+Client → Jump Server → Destination Server → Destination Terminal
+```
+
+### Command Execution
+
+#### `-c, --command \u003cCOMMAND\u003e`
+
+Execute a single command and exit.
+
+**Format**: Command string with newline  
+**Example**:
+\u003cCodeGroup\u003e
+```powershell PowerShell
+# Note: `r`n for cmd.exe newline
+--command "dir`r`n"
+--command "echo Hello`r`n"
+```
+
+```powershell Multi-line
+--command @"
+cd C:\projects
+npm run build`r`n
+"@
+```
+\u003c/CodeGroup\u003e
+
+**Behavior**:
+- Sends command to session
+- Waits for output
+- Exits on idle timeout
+- Does NOT enter interactive mode
+
+#### `--noexit`
+
+Keep client running after command completes (interactive mode).
+
+**Use with**: `--connect` (default for SSH mode)  
+**Example**:
+```powershell
+# One-shot command (exits when idle)
+--connect ... -c "dir`r`n"
+
+# Interactive session (stays open)
+--connect ... --noexit
+```
+
+### Port Forwarding
+
+#### `-t, --tunnel \u003cSPEC\u003e`
+
+Forward tunnel (local → remote).
+
+**Syntax**:
+```
+LOCAL:REMOTE
+LOCAL:HOST:REMOTE
+BIND:LOCAL:HOST:REMOTE
+START-END:START-END
+```
+
+**Examples**:
+\u003cCodeGroup\u003e
+```powershell Simple
+-t 8080:9090
+# localhost:8080 → remote:9090
+```
+
+```powershell Explicit Host
+-t 8080:database:5432
+# localhost:8080 → database:5432
+```
+
+```powershell Custom Bind
+-t 0.0.0.0:8080:api:3000
+# 0.0.0.0:8080 → api:3000 (accessible externally)
+```
+
+```powershell Range
+-t 8080-8085:9090-9095
+# 6 tunnels: 8080→9090, 8081→9091, ..., 8085→9095
+```
+\u003c/CodeGroup\u003e
+
+**Multiple Tunnels**:
+```powershell
+-t 5432:db:5432 -t 6379:redis:6379 -t 3000:api:3000
+```
+
+#### `-r, --reversetunnel \u003cSPEC\u003e`
+
+Reverse tunnel (remote → local).
+
+**Syntax**:
+```
+REMOTE:LOCAL
+REMOTE:HOST:LOCAL
+```
+
+**Examples**:
+\u003cCodeGroup\u003e
+```powershell Simple
+-r 3000:8000
+# Server listens on 3000 → client's localhost:8000
+```
+
+```powershell Explicit Destination
+-r 8080:localhost:3000
+# Server:8080 → client's localhost:3000
+```
+
+```powershell Multiple
+-r 8080:3000 -r 5432:5432 -r 6379:6379
+```
+\u003c/CodeGroup\u003e
+
+### Environment Variables
+
+#### `--environmentvariable \u003cNAME\u003e=\u003cVALUE\u003e`
+
+Send environment variable to remote session.
+
+**Example**:
+```powershell
+--environmentvariable PATH=/usr/local/bin:$PATH
+--environmentvariable NODE_ENV=production
+```
+
+**Multiple Variables**:
+```powershell
+--environmentvariable FOO=bar `
+--environmentvariable BAZ=qux
+```
+
+## Usage Examples
+
+### Basic Connection
+
+\u003cCodeGroup\u003e
+```powershell Interactive
+# Standard interactive session
+./undying-terminal.exe `
+  --connect 192.168.1.100 2022 abc123def456 `
+  --key 1234567890abcdef `
+  --noexit
+```
+
+```powershell One-Shot Command
+# Execute command and exit
+./undying-terminal.exe `
+  --connect 192.168.1.100 2022 abc123def456 `
+  --key 1234567890abcdef `
+  -c "dir C:\`r`n"
+```
+\u003c/CodeGroup\u003e
+
+### SSH Bootstrap
+
+\u003cCodeGroup\u003e
+```powershell Simple
+# SSH with username@host
+./undying-terminal.exe --ssh user@remote-server.com
+```
+
+```powershell With Login Flag
+# SSH with separate login flag
+./undying-terminal.exe --ssh remote-server.com -l admin
+```
+
+```powershell With Port
+# SSH on non-standard port (use standard SSH syntax)
+./undying-terminal.exe --ssh user@remote-server.com:2222
+```
+\u003c/CodeGroup\u003e
+
+### Port Forwarding
+
+\u003cCodeGroup\u003e
+```powershell Database Access
+# Forward remote database to local port
+./undying-terminal.exe `
+  --connect db-server.com 2022 \u003cID\u003e --key \u003cKEY\u003e `
+  -t 5432:postgres-internal:5432 `
+  --noexit
+```
+
+```powershell Web Development
+# Forward multiple dev services
+./undying-terminal.exe `
+  --connect dev-server.com 2022 \u003cID\u003e --key \u003cKEY\u003e `
+  -t 3000:api:3000 `
+  -t 8080:frontend:8080 `
+  -t 6379:redis:6379 `
+  --noexit
+```
+
+```powershell Reverse Tunnel (Expose Local)
+# Expose local web server to remote network
+./undying-terminal.exe `
+  --connect remote-server.com 2022 \u003cID\u003e --key \u003cKEY\u003e `
+  -r 8080:localhost:3000 `
+  --noexit
+```
+\u003c/CodeGroup\u003e
+
+### Jumphost
+
+```powershell
+# Connect through jump server to final destination
+./undying-terminal.exe `
+  --connect jump.company.com 2022 jump-client-id --key jump-key `
+  --jumphost prod.internal.company.com --jport 2022 `
+  --noexit
+```
+
+### Combined Example
+
+```powershell
+# Full-featured connection:
+# - Connect to remote server
+# - Forward database and Redis
+# - Reverse tunnel for local dev server
+# - Set environment variable
+./undying-terminal.exe `
+  --connect prod-server.com 2022 abc123def456 `
+  --key 1234567890abcdef `
+  -t 5432:db.internal:5432 `
+  -t 6379:redis.internal:6379 `
+  -r 8080:localhost:3000 `
+  --environmentvariable NODE_ENV=production `
+  --noexit
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success (normal exit) |
+| `1` | Connection failed |
+| `2` | Invalid arguments |
+| `3` | Authentication failed |
+| `4` | Network error |
+| `5` | Protocol error |
+
+## Environment Variables
+
+These environment variables affect client behavior:
+
+### `UT_DEBUG_HANDSHAKE`
+
+Enable packet-level debugging.
+
+```powershell
+$env:UT_DEBUG_HANDSHAKE = 1
+./undying-terminal.exe --connect ...
+```
+
+**Output**: Prints packet types sent/received
+
+### `UT_PIPE_NAME`
+
+Override named pipe path (when connecting to non-default server).
+
+```powershell
+$env:UT_PIPE_NAME = "\\\\.\\pipe\\undying-terminal-custom"
+./undying-terminal-terminal.exe
+```
+
+## Common Patterns
+
+### Connection Script
+
+Save frequently-used connections:
+
+```powershell
+# connect-dev.ps1
+$clientId = "abc123def456"
+$passkey = "1234567890abcdef"
+
+./undying-terminal.exe `
+  --connect dev-server.com 2022 $clientId `
+  --key $passkey `
+  -t 5432:db:5432 `
+  --noexit
+```
+
+Usage:
+```powershell
+.\connect-dev.ps1
+```
+
+### Health Check Script
+
+Check if session is responsive:
+
+```powershell
+# health-check.ps1
+$output = ./undying-terminal.exe `
+  --connect 127.0.0.1 2022 $clientId `
+  --key $passkey `
+  -c "echo OK`r`n"
+
+if ($output -match "OK") {
+  Write-Output "Session healthy"
+  exit 0
+} else {
+  Write-Output "Session unresponsive"
+  exit 1
+}
+```
+
+### Automated Deployment
+
+```powershell
+# deploy.ps1
+./undying-terminal.exe `
+  --connect prod-server.com 2022 $clientId `
+  --key $passkey `
+  -c @"
+cd C:\apps\myapp
+git pull origin main
+npm install
+npm run build
+Restart-Service MyAppService`r`n
+"@
+```
+
+## Comparison with Other Terminals
+
+### vs. SSH
+
+| Feature | Undying Terminal | SSH |
+|---------|------------------|-----|
+| Session Persistence | Yes Automatic | No Drops on disconnect |
+| Recovery | Yes Packet-level | No None |
+| Reconnection | Yes Automatic | No Manual |
+| Port Forwarding | Yes Persistent tunnels | Yes Drops on disconnect |
+| Windows Native | Yes Yes | Warning: Requires WSL/OpenSSH |
+
+### vs. tmux/screen
+
+| Feature | Undying Terminal | tmux/screen |
+|---------|------------------|-------------|
+| Session Multiplexing | No Single session per terminal | Yes Multiple panes |
+| Network Resilience | Yes Built-in recovery | Yes Via SSH wrapper |
+| Windows Support | Yes Native | No Requires WSL |
+| Port Forwarding | Yes Built-in | No Requires SSH |
+
+### vs. Eternal Terminal (ET)
+
+| Feature | Undying Terminal | ET |
+|---------|------------------|-----|
+| Protocol | ET-compatible | ET protocol |
+| Platform | Windows | Linux/macOS |
+| Architecture | Client-Server-Terminal | Client-Server |
+| ConPTY | Yes Yes | No No |
+
+## Debugging
+
+Enable verbose output:
+
+```powershell
+# Debug handshake
+$env:UT_DEBUG_HANDSHAKE = 1
+
+# Run client
+./undying-terminal.exe --connect ... --noexit
+```
+
+Check connection:
+
+```powershell
+# Verify server is reachable
+Test-NetConnection -ComputerName prod-server.com -Port 2022
+
+# Check client process
+tasklist | findstr undying-terminal.exe
+```
+
+## Next Steps
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard
+    title="Server CLI Reference"
+    icon="server"
+    href="/api-reference/server-cli"
+  \u003e
+    Server command-line options
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Terminal CLI Reference"
+    icon="terminal"
+    href="/api-reference/terminal-cli"
+  \u003e
+    Terminal command-line options
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Configuration Guide"
+    icon="gear"
+    href="/config/server-config"
+  \u003e
+    Configure server behavior
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Port Forwarding Guide"
+    icon="right-left"
+    href="/guides/port-forwarding"
+  \u003e
+    Detailed tunnel examples
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e

@@ -1,0 +1,588 @@
+---
+title: Server Configuration
+description: Configure Undying Terminal server behavior and settings
+---
+
+## Configuration File
+
+The server reads configuration from:
+
+```
+%PROGRAMDATA%\UndyingTerminal\ut.cfg
+```
+
+Typical path: `C:\ProgramData\UndyingTerminal\ut.cfg`
+
+## Configuration Format
+
+INI-style format with key=value pairs:
+
+```ini
+# Undying Terminal Server Configuration
+
+# Network Settings
+port=2022
+bind_ip=0.0.0.0
+
+# Logging
+verbose=false
+
+# Security (Optional)
+shared_key_hex=\u003cyour-32-byte-hex-key\u003e
+```
+
+## Configuration Options
+
+### Network Settings
+
+#### `port`
+
+**Type**: Integer  
+**Default**: `2022`  
+**Description**: TCP port for server to listen on
+
+```ini
+port=2022
+```
+
+\u003cTip\u003e
+Choose a non-standard port (\u003e1024) to avoid conflicts and reduce automated scans.
+\u003c/Tip\u003e
+
+**Examples**:
+```ini
+port=2022     # Default
+port=8022     # Alternative (less likely to conflict)
+port=22222    # High port number
+```
+
+#### `bind_ip`
+
+**Type**: IP Address  
+**Default**: `0.0.0.0`  
+**Description**: IP address to bind server listener
+
+```ini
+bind_ip=0.0.0.0
+```
+
+| Value | Behavior |
+|-------|----------|
+| `0.0.0.0` | Listen on all interfaces (default) |
+| `127.0.0.1` | Listen only on localhost (local-only access) |
+| `192.168.1.10` | Listen on specific interface |
+| `::` | Listen on all IPv6 interfaces |
+
+**Security Considerations**:
+- Use `127.0.0.1` for local development
+- Use `0.0.0.0` for remote access (combine with firewall rules)
+- Use specific IP for multi-NIC servers
+
+### Logging
+
+#### `verbose`
+
+**Type**: Boolean (`true` / `false`)  
+**Default**: `false`  
+**Description**: Enable verbose logging
+
+```ini
+verbose=false
+```
+
+When `true`, server logs:
+- Client connections/disconnections
+- Packet types sent/received
+- Named pipe events
+- Tunnel creation/destruction
+
+**Output**: Written to stdout/stderr
+
+\u003cInfo\u003e
+Verbose logging helps diagnose connection issues but increases log volume. Enable temporarily for debugging.
+\u003c/Info\u003e
+
+### Security
+
+#### `shared_key_hex`
+
+**Type**: 64-character hex string (32 bytes)  
+**Default**: None (encryption disabled)  
+**Description**: Shared secret for XSalsa20 encryption
+
+```ini
+shared_key_hex=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+```
+
+**Encryption Details**:
+- Algorithm: XSalsa20 (via libsodium)
+- Key size: 32 bytes (256-bit)
+- Nonce: 24 bytes (auto-incremented per packet)
+- Applied to all client ↔ server communication
+
+**Generate a Key**:
+
+\u003cCodeGroup\u003e
+```powershell PowerShell
+# Generate random 32-byte hex key
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($bytes)
+$hexKey = -join ($bytes | ForEach-Object { $_.ToString("x2") })
+Write-Output "shared_key_hex=$hexKey"
+```
+
+```bash Linux/MSYS2
+# Generate random 32-byte hex key
+openssl rand -hex 32
+```
+\u003c/CodeGroup\u003e
+
+\u003cWarning title="Security Notice"\u003e
+- **Enable encryption** for internet-facing servers
+- Encryption provides **confidentiality only** (no authentication/MAC)
+- Passkey is still sent in plaintext during initial handshake
+- Consider using VPN for highly sensitive environments
+\u003c/Warning\u003e
+
+## Example Configurations
+
+### Development (Local Only)
+
+```ini
+# Development configuration
+# Local-only access, verbose logging, no encryption
+
+port=2022
+bind_ip=127.0.0.1
+verbose=true
+```
+
+### Production (Internet-Facing)
+
+```ini
+# Production configuration
+# All interfaces, minimal logging, encryption enabled
+
+port=2022
+bind_ip=0.0.0.0
+verbose=false
+shared_key_hex=\u003cgenerated-key-here\u003e
+```
+
+### Multi-Server (Development)
+
+When running multiple servers on one machine:
+
+\u003cCodeGroup\u003e
+```ini Server 1: ut.cfg
+port=2022
+bind_ip=0.0.0.0
+verbose=false
+```
+
+```ini Server 2: ut2.cfg
+port=2023
+bind_ip=0.0.0.0
+verbose=false
+```
+\u003c/CodeGroup\u003e
+
+Then use environment variables:
+
+```powershell
+# Server 1 (default config, default pipe)
+./undying-terminal-server.exe
+
+# Server 2 (different port, different pipe)
+$env:UT_PIPE_NAME = "\\\\.\\pipe\\undying-terminal-2023"
+./undying-terminal-server.exe --port 2023
+```
+
+## Environment Variables
+
+Override configuration at runtime:
+
+### `UT_PIPE_NAME`
+
+**Type**: String (Windows named pipe path)  
+**Default**: `\\\\.\\pipe\\undying-terminal`  
+**Description**: Override named pipe path
+
+```powershell
+# Use custom pipe name
+$env:UT_PIPE_NAME = "\\\\.\\pipe\\ut-custom"
+./undying-terminal-server.exe
+```
+
+**Use Cases**:
+- Running multiple servers on one machine
+- Avoiding pipe name conflicts
+- Development/testing isolation
+
+\u003cNote\u003e
+Terminals must use the same `UT_PIPE_NAME` to connect to the correct server.
+\u003c/Note\u003e
+
+### `UT_DEBUG_HANDSHAKE`
+
+**Type**: Boolean (`1` = enabled)  
+**Default**: Not set (disabled)  
+**Description**: Enable packet-level debug output
+
+```powershell
+$env:UT_DEBUG_HANDSHAKE = 1
+./undying-terminal-server.exe
+```
+
+**Output**: Prints every packet type sent/received
+
+**Example**:
+```
+[DEBUG] Sent: CONNECT_REQUEST
+[DEBUG] Recv: CONNECT_RESPONSE (status=NEW_CLIENT)
+[DEBUG] Sent: INITIAL_PAYLOAD
+[DEBUG] Recv: INITIAL_RESPONSE
+```
+
+## Command-Line Flags
+
+Override config file settings:
+
+### `--port \u003cPORT\u003e`
+
+```powershell
+./undying-terminal-server.exe --port 8022
+```
+
+### `--add-firewall`
+
+Automatically add Windows Firewall rule:
+
+```powershell
+# Run once to add firewall rule
+./undying-terminal-server.exe --add-firewall
+```
+
+Creates rule:
+- Name: "Undying Terminal Server"
+- Direction: Inbound
+- Protocol: TCP
+- Port: Current port (from config or --port)
+- Action: Allow
+
+### `--service`
+
+Run as Windows service:
+
+```powershell
+# Install service
+sc.exe create UndyingTerminalServer `
+  binPath= "C:\Program Files\UndyingTerminal\undying-terminal-server.exe --service"
+
+# Start service
+sc.exe start UndyingTerminalServer
+```
+
+When running as service:
+- Uses SYSTEM account
+- Starts automatically on boot
+- Logs to Windows Event Log
+- Handles graceful shutdown
+
+## Configuration Precedence
+
+Settings are applied in this order (later overrides earlier):
+
+1. **Defaults** (hardcoded in binary)
+2. **Config file** (`%PROGRAMDATA%\UndyingTerminal\ut.cfg`)
+3. **Environment variables** (`UT_PIPE_NAME`, etc.)
+4. **Command-line flags** (`--port`, etc.)
+
+**Example**:
+```powershell
+# Config file: port=2022
+# Command line: --port 8022
+# Result: Server listens on 8022 (CLI wins)
+```
+
+## Firewall Configuration
+
+### Windows Defender Firewall
+
+\u003cTabs\u003e
+  \u003cTab title="Automatic"\u003e
+    ```powershell
+    # Run server with --add-firewall once
+    ./undying-terminal-server.exe --add-firewall
+    ```
+    
+    This creates an inbound rule automatically.
+  \u003c/Tab\u003e
+  
+  \u003cTab title="Manual (PowerShell)"\u003e
+    ```powershell
+    # PowerShell (Run as Administrator)
+    New-NetFirewallRule `
+      -DisplayName "Undying Terminal Server" `
+      -Direction Inbound `
+      -Protocol TCP `
+      -LocalPort 2022 `
+      -Action Allow `
+      -Profile Any
+    ```
+  \u003c/Tab\u003e
+  
+  \u003cTab title="Manual (GUI)"\u003e
+    1. Open Windows Defender Firewall
+    2. Click "Advanced settings"
+    3. Right-click "Inbound Rules" → "New Rule..."
+    4. Rule Type: **Port**
+    5. Protocol: **TCP**, Port: **2022**
+    6. Action: **Allow the connection**
+    7. Profile: **All** (Domain, Private, Public)
+    8. Name: **Undying Terminal Server**
+  \u003c/Tab\u003e
+\u003c/Tabs\u003e
+
+### Third-Party Firewalls
+
+Configure your firewall to allow:
+- **Inbound TCP** on configured port (default 2022)
+- **Application**: `undying-terminal-server.exe`
+
+## Network Configuration
+
+### Port Forwarding (Router)
+
+To access the server from external networks:
+
+\u003cSteps\u003e
+  \u003cStep title="Find Internal IP"\u003e
+    ```powershell
+    ipconfig | findstr IPv4
+    ```
+    
+    Example: `192.168.1.100`
+  \u003c/Step\u003e
+  
+  \u003cStep title="Configure Router"\u003e
+    In your router's admin panel:
+    - **External Port**: `2022`
+    - **Internal IP**: `192.168.1.100`
+    - **Internal Port**: `2022`
+    - **Protocol**: TCP
+  \u003c/Step\u003e
+  
+  \u003cStep title="Test External Access"\u003e
+    ```powershell
+    # From external network
+    ./undying-terminal.exe --ssh \u003cPUBLIC_IP\u003e -l user
+    ```
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+\u003cWarning\u003e
+**Security**: When exposing to the internet, **always enable encryption** via `shared_key_hex`.
+\u003c/Warning\u003e
+
+## Performance Tuning
+
+### High-Concurrency Environments
+
+For \u003e100 concurrent sessions:
+
+```ini
+# Use dedicated network interface
+bind_ip=192.168.1.100
+
+# Disable verbose logging
+verbose=false
+
+# Enable encryption (adds ~1-2ms latency)
+shared_key_hex=\u003ckey\u003e
+```
+
+**OS Tuning** (Windows):
+```powershell
+# Increase TCP connection limit (if needed)
+netsh int tcp set global autotuninglevel=normal
+```
+
+### Low-Bandwidth Networks
+
+```ini
+# Standard settings work well
+# Keepalive traffic is minimal (~200 bytes/5s per session)
+
+port=2022
+bind_ip=0.0.0.0
+verbose=false
+```
+
+**Client-Side**: Reduce keepalive frequency (requires recompile)
+
+## Monitoring and Logs
+
+### Check Server Status
+
+```powershell
+# Verify server is listening
+netstat -ano | findstr :2022
+
+# Check process
+tasklist | findstr undying-terminal-server
+```
+
+### View Logs
+
+When `verbose=true`:
+
+```powershell
+# Run server with output redirection
+./undying-terminal-server.exe \u003e server.log 2\u003e&1
+
+# Tail log file
+Get-Content server.log -Wait -Tail 20
+```
+
+### Metrics to Monitor
+
+| Metric | Command | Normal Range |
+|--------|---------|--------------|
+| Active Connections | `netstat -ano \| findstr :2022 \| measure` | 0-1000s |
+| Memory Usage | `tasklist /fi "imagename eq undying-terminal-server.exe"` | ~50MB + (5MB × sessions) |
+| CPU Usage | Task Manager | \u003c5% idle, \u003c20% under load |
+
+## Backup and Recovery
+
+### Backup Configuration
+
+```powershell
+# Backup config file
+Copy-Item "$env:PROGRAMDATA\UndyingTerminal\ut.cfg" `
+          "C:\Backups\ut.cfg.$(Get-Date -Format 'yyyy-MM-dd')"
+```
+
+### Restore Configuration
+
+```powershell
+# Restore from backup
+Copy-Item "C:\Backups\ut.cfg.2024-01-15" `
+          "$env:PROGRAMDATA\UndyingTerminal\ut.cfg"
+
+# Restart server
+Restart-Service UndyingTerminalServer
+```
+
+## Troubleshooting Configuration
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Config file not found"\u003e
+    **Error**: Server uses default settings
+    
+    **Solution**: Create config directory
+    ```powershell
+    New-Item -ItemType Directory -Force -Path "$env:PROGRAMDATA\UndyingTerminal"
+    ```
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Invalid configuration value"\u003e
+    **Error**: Server fails to start or uses default
+    
+    **Check**:
+    - Valid port number (1-65535, typically \u003e1024)
+    - Valid IP address for `bind_ip`
+    - 64-character hex string for `shared_key_hex`
+    - `true`/`false` for boolean values
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Encryption key mismatch"\u003e
+    **Error**: Client can't connect (invalid handshake)
+    
+    **Cause**: Client and server have different encryption keys
+    
+    **Solution**: Ensure both use same `shared_key_hex` value
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Port already in use"\u003e
+    **Error**: `bind: address already in use`
+    
+    **Check what's using the port**:
+    ```powershell
+    netstat -ano | findstr :2022
+    ```
+    
+    **Solutions**:
+    - Change port in config
+    - Stop conflicting service
+    - Use `--port` flag to override
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+## Security Best Practices
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard title="Encryption" icon="lock"\u003e
+    - Enable `shared_key_hex` for production
+    - Generate strong random keys (32 bytes)
+    - Store keys securely
+    - Rotate keys periodically
+  \u003c/Card\u003e
+  
+  \u003cCard title="Network Isolation" icon="network-wired"\u003e
+    - Use `bind_ip=127.0.0.1` for local-only
+    - Use firewall rules to restrict access
+    - Use VPN for sensitive environments
+    - Avoid exposing to public internet
+  \u003c/Card\u003e
+  
+  \u003cCard title="Access Control" icon="shield"\u003e
+    - Use strong random passkeys
+    - Limit who knows passkeys
+    - Monitor active sessions
+    - Audit connections regularly
+  \u003c/Card\u003e
+  
+  \u003cCard title="Operational Security" icon="user-shield"\u003e
+    - Run as Windows service (not user account)
+    - Disable verbose logging in production
+    - Monitor server logs
+    - Keep software updated
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e
+
+## Next Steps
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard
+    title="Client Options"
+    icon="desktop"
+    href="/config/client-options"
+  \u003e
+    Configure client behavior
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Environment Variables"
+    icon="code"
+    href="/config/environment-variables"
+  \u003e
+    Runtime configuration options
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Windows Service Guide"
+    icon="windows"
+    href="/guides/windows-service"
+  \u003e
+    Run server as a service
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Troubleshooting"
+    icon="wrench"
+    href="/troubleshooting/common-issues"
+  \u003e
+    Solve configuration issues
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e

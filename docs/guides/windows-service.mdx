@@ -1,0 +1,41 @@
+---
+title: "Run as a Windows service"
+description: "Install Undying Terminal as a background service so it starts on boot and keeps sessions alive."
+---
+
+## Goal
+
+Running Undying Terminal as a Windows service is useful when you want:
+
+- Sessions to survive user logoff
+- The server to start automatically on boot
+- A consistent runtime environment
+
+## Install
+
+This project supports service installation, but the exact command and flags depend on your distribution method (MSI, winget, chocolatey, or a zipped binary).
+
+If your build includes a service subcommand, it typically follows this pattern:
+
+```powershell
+undyingterminal service install
+undyingterminal service start
+```
+
+## Verify
+
+```powershell
+Get-Service | Where-Object { $_.Name -like "*undying*" }
+```
+
+## Uninstall
+
+```powershell
+undyingterminal service stop
+undyingterminal service uninstall
+```
+
+## Troubleshooting
+
+- If the service starts but sessions fail to reconnect after sleep/wake, confirm firewall rules and the configured bind address.
+- If you run on a locked-down machine, ensure the service account has the required filesystem and network permissions.

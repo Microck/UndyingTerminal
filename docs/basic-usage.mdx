@@ -1,0 +1,471 @@
+---
+title: Basic Usage
+description: Common workflows and everyday usage patterns
+---
+
+## Daily Workflow
+
+### Starting Your Day
+
+\u003cSteps\u003e
+  \u003cStep title="Start Server (if not running as service)"\u003e
+    ```powershell
+    ./undying-terminal-server.exe
+    ```
+    
+    Leave this running in a dedicated terminal window.
+  \u003c/Step\u003e
+  
+  \u003cStep title="Start Terminal Session"\u003e
+    ```powershell
+    echo "XXX" | ./undying-terminal-terminal.exe
+    ```
+    
+    **First run only**: Save the client ID and passkey shown.
+  \u003c/Step\u003e
+  
+  \u003cStep title="Connect Client"\u003e
+    ```powershell
+    ./undying-terminal.exe `
+      --connect 127.0.0.1 2022 \u003cCLIENT_ID\u003e `
+      --key \u003cPASSKEY\u003e `
+      --noexit
+    ```
+    
+    **Tip**: Save this command in a script for quick access.
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+### Ending Your Day
+
+Simply close the client terminal. Your session stays alive!
+
+Tomorrow:
+- Server still running
+- Terminal still active
+- Just reconnect the client
+
+## Common Commands
+
+### Interactive Session
+
+```powershell
+# Standard interactive connection
+./undying-terminal.exe `
+  --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e `
+  --key \u003cPASSKEY\u003e `
+  --noexit
+```
+
+Use this for:
+- Day-to-day terminal work
+- Long-running processes
+- Remote development
+
+### One-Shot Commands
+
+```powershell
+# Execute single command and exit
+./undying-terminal.exe `
+  --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e `
+  --key \u003cPASSKEY\u003e `
+  -c "dir`r`n"
+```
+
+\u003cNote\u003e
+Include `` `r`n`` (carriage return + newline) for cmd.exe to execute the command.
+\u003c/Note\u003e
+
+### SSH Bootstrap (Remote Servers)
+
+```powershell
+# Connect to remote server, start terminal, connect directly
+./undying-terminal.exe --ssh user@remote-server.com -l username
+```
+
+This:
+1. SSHs to remote server
+2. Starts `undying-terminal-terminal` there
+3. Extracts credentials
+4. Switches to direct TCP connection
+5. Keeps session alive forever
+
+## Practical Scenarios
+
+### Scenario 1: Development Workflow
+
+\u003cCodeGroup\u003e
+```powershell Start Dev Environment
+# Terminal 1: Server
+./undying-terminal-server.exe
+
+# Terminal 2: Dev session
+echo "dev-session" | ./undying-terminal-terminal.exe
+# Note client_id and passkey
+
+# Terminal 3: Connect with tunnels
+./undying-terminal.exe `
+  --connect 127.0.0.1 2022 \u003cCLIENT_ID\u003e `
+  --key \u003cPASSKEY\u003e `
+  -t 5432:db-server:5432 `     # Database
+  -t 6379:redis-server:6379 `  # Redis
+  -t 3000:api-server:3000 `    # API
+  --noexit
+```
+
+```powershell Daily Workflow
+# In the persistent session:
+cd C:\projects\myapp
+npm run dev
+
+# Close laptop, go home
+# Next day: reconnect (same command)
+./undying-terminal.exe --connect 127.0.0.1 2022 \u003cID\u003e --key \u003cKEY\u003e --noexit
+
+# Your npm dev server is still running!
+```
+\u003c/CodeGroup\u003e
+
+### Scenario 2: Long-Running Builds
+
+```powershell
+# Start build in persistent session
+./undying-terminal.exe --connect ... --noexit
+
+# In session:
+cmake --build . --config Release
+# This takes 2 hours...
+
+# Network drops? No problem - session continues
+# Reconnect and see build progress:
+./undying-terminal.exe --connect ... --noexit
+```
+
+### Scenario 3: Remote Administration
+
+\u003cCodeGroup\u003e
+```powershell Setup Remote Session
+# From workstation, bootstrap to server
+./undying-terminal.exe --ssh admin@prod-server.com -l admin
+
+# Session started!
+# Now you have persistent access to prod-server
+```
+
+```powershell Maintenance Tasks
+# In the persistent session on prod-server:
+# Start long-running backup
+./backup-script.ps1
+
+# Disconnect laptop, go to meeting
+# Session continues running
+
+# Reconnect later to check status
+./undying-terminal.exe --connect prod-server.com 2022 \u003cID\u003e --key \u003cKEY\u003e
+```
+\u003c/CodeGroup\u003e
+
+### Scenario 4: Unstable Network Environments
+
+```powershell
+# Working from coffee shop with flaky WiFi
+./undying-terminal.exe `
+  --ssh dev-server.com -l developer
+
+# In session, start long task:
+python train-model.py  # Takes 6 hours
+
+# WiFi drops? No problem
+# Automatic reconnect every 100ms-2000ms
+
+# Model training continues uninterrupted
+```
+
+## Session Management
+
+### Multiple Sessions
+
+Run multiple independent sessions:
+
+\u003cCodeGroup\u003e
+```powershell Session 1: Development
+# Terminal 1
+echo "dev" | ./undying-terminal-terminal.exe
+# client_id: dev-001, passkey: abc123
+
+# Connect to dev session
+./undying-terminal.exe --connect 127.0.0.1 2022 dev-001 --key abc123 --noexit
+```
+
+```powershell Session 2: Production
+# Terminal 2 (with different pipe)
+$env:UT_PIPE_NAME = "\\\\.\\pipe\\undying-terminal-prod"
+echo "prod" | ./undying-terminal-terminal.exe
+# client_id: prod-001, passkey: def456
+
+# Connect to prod session
+./undying-terminal.exe --connect 127.0.0.1 2022 prod-001 --key def456 --noexit
+```
+\u003c/CodeGroup\u003e
+
+### Session Discovery
+
+Track active sessions:
+
+```powershell
+# Keep a sessions.txt file
+@"
+Dev Session:
+  client_id: abc123def456
+  passkey: 1234567890abcdef
+  purpose: Development work
+  
+Prod Session:
+  client_id: xyz789ghi012
+  passkey: fedcba0987654321
+  purpose: Production monitoring
+"@ | Out-File sessions.txt
+```
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+C` | Interrupt current command (sent to shell) |
+| `Ctrl+D` | Send EOF (may exit shell) |
+| `Ctrl+Z` | Suspend (Windows behavior) |
+
+\u003cWarning\u003e
+**Exiting the shell** (e.g., `exit` or `Ctrl+D`) will **terminate the terminal process**. This ends the session! Use client disconnect instead.
+\u003c/Warning\u003e
+
+## Disconnecting vs. Exiting
+
+### Client Disconnect (Safe)
+
+```powershell
+# Simply close the client terminal window
+# OR press Ctrl+C in client terminal
+```
+
+**Result**:
+- Session stays alive
+- Terminal keeps running
+- Can reconnect anytime
+
+### Shell Exit (Dangerous)
+
+```powershell
+# In the session:
+exit
+
+# OR
+Ctrl+D
+```
+
+**Result**:
+- Shell terminates
+- Terminal process exits
+- Session ends
+- Must restart terminal
+
+\u003cTip\u003e
+**Best practice**: Always disconnect the client, never exit the shell.
+\u003c/Tip\u003e
+
+## Scripting and Automation
+
+### Connection Script
+
+Save frequently-used connections:
+
+\u003cCodeGroup\u003e
+```powershell connect-dev.ps1
+# connect-dev.ps1
+$clientId = "abc123def456"
+$passkey = "1234567890abcdef"
+
+./undying-terminal.exe `
+  --connect 127.0.0.1 2022 $clientId `
+  --key $passkey `
+  -t 5432:db:5432 `
+  -t 6379:redis:6379 `
+  --noexit
+```
+
+```powershell connect-prod.ps1
+# connect-prod.ps1 (with encryption!)
+$clientId = "prod-client-id"
+$passkey = "prod-passkey"
+
+./undying-terminal.exe `
+  --connect prod-server.com 2022 $clientId `
+  --key $passkey `
+  --noexit
+```
+\u003c/CodeGroup\u003e
+
+Usage:
+```powershell
+.\connect-dev.ps1    # Instant connection
+```
+
+### Automated Commands
+
+\u003cCodeGroup\u003e
+```powershell Run Command Script
+# run-backup.ps1
+$clientId = "server-backup"
+$passkey = "backup-key"
+
+./undying-terminal.exe `
+  --connect backup-server.com 2022 $clientId `
+  --key $passkey `
+  -c "./backup.ps1`r`n"
+```
+
+```powershell Scheduled Task
+# Windows Task Scheduler
+$action = New-ScheduledTaskAction `
+  -Execute "PowerShell.exe" `
+  -Argument "-File C:\scripts\run-backup.ps1"
+
+$trigger = New-ScheduledTaskTrigger -Daily -At 2am
+
+Register-ScheduledTask `
+  -TaskName "Nightly Backup via Undying Terminal" `
+  -Action $action `
+  -Trigger $trigger
+```
+\u003c/CodeGroup\u003e
+
+## Monitoring and Logging
+
+### Client-Side Logging
+
+Enable debug logging:
+
+```powershell
+# Handshake debugging
+$env:UT_DEBUG_HANDSHAKE = 1
+./undying-terminal.exe --connect ...
+
+# Server-side verbose logging
+# In ut.cfg:
+verbose=true
+```
+
+### Check Connection Status
+
+```powershell
+# While connected, check server status
+netstat -ano | findstr :2022
+
+# Check if terminal is running
+tasklist | findstr undying-terminal-terminal
+```
+
+## Tips and Tricks
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Reconnect Faster" icon="bolt"\u003e
+    When you know you'll reconnect soon:
+    
+    ```powershell
+    # Keep client_id and passkey in environment
+    $env:UT_CLIENT_ID = "abc123"
+    $env:UT_PASSKEY = "mykey"
+    
+    # Quick reconnect
+    ./undying-terminal.exe `
+      --connect 127.0.0.1 2022 $env:UT_CLIENT_ID `
+      --key $env:UT_PASSKEY `
+      --noexit
+    ```
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Run Server as Background Job" icon="circle-play"\u003e
+    ```powershell
+    # PowerShell background job
+    Start-Job -ScriptBlock {
+      Set-Location "C:\Program Files\UndyingTerminal"
+      .\undying-terminal-server.exe
+    }
+    
+    # Check status
+    Get-Job
+    
+    # Stop
+    Get-Job | Stop-Job
+    ```
+    
+    \u003cNote\u003e
+    Better: Install as Windows service for production.
+    \u003c/Note\u003e
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Test Session Recovery" icon="flask"\u003e
+    ```powershell
+    # 1. Start long-running command
+    ping -t 8.8.8.8
+    
+    # 2. Disconnect client (Ctrl+C or close window)
+    
+    # 3. Simulate delay
+    Start-Sleep -Seconds 10
+    
+    # 4. Reconnect
+    ./undying-terminal.exe --connect ... --noexit
+    
+    # 5. Verify: ping output continues, recent history replayed
+    ```
+  \u003c/Accordion\u003e
+  
+  \u003cAccordion title="Reduce Keepalive Traffic" icon="signal"\u003e
+    For bandwidth-constrained networks:
+    
+    ```cpp
+    // In source: Keepalive.cpp
+    // Change interval from 5s to 30s
+    constexpr auto kKeepaliveInterval = std::chrono::seconds(30);
+    ```
+    
+    Rebuild and use custom binary.
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+## Next Steps
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard
+    title="Port Forwarding"
+    icon="right-left"
+    href="/guides/port-forwarding"
+  \u003e
+    Tunnel local and remote ports
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="SSH Bootstrap"
+    icon="terminal"
+    href="/guides/ssh-bootstrap"
+  \u003e
+    Start remote sessions via SSH
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Configuration"
+    icon="gear"
+    href="/config/server-config"
+  \u003e
+    Customize server behavior
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Troubleshooting"
+    icon="wrench"
+    href="/troubleshooting/common-issues"
+  \u003e
+    Solve common problems
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e

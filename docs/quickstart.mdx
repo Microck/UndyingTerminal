@@ -1,0 +1,312 @@
+---
+title: Quick Start
+description: Get started with Undying Terminal in 5 minutes
+---
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- Windows 10 or later (Windows Server 2019+ also supported)
+- Windows Terminal, CMD, or PowerShell
+- Downloaded the latest release binaries
+
+\u003cWarning\u003e
+Undying Terminal requires Windows 10+ for ConPTY support. Earlier Windows versions are not supported.
+\u003c/Warning\u003e
+
+## Installation
+
+\u003cSteps\u003e
+  \u003cStep title="Download Binaries"\u003e
+    Download the latest release from GitHub:
+    
+    ```powershell
+    # Download from releases page
+    https://github.com/yourusername/undyingterminal/releases/latest
+    ```
+    
+    Extract the archive to a directory (e.g., `C:\Program Files\UndyingTerminal`)
+  \u003c/Step\u003e
+
+  \u003cStep title="Add to PATH (Optional)"\u003e
+    Add the installation directory to your PATH for convenience:
+    
+    ```powershell
+    # PowerShell (Run as Administrator)
+    $path = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $newPath = "$path;C:\Program Files\UndyingTerminal"
+    [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')
+    ```
+  \u003c/Step\u003e
+
+  \u003cStep title="Verify Installation"\u003e
+    Verify all three executables are present:
+    
+    ```powershell
+    ls C:\Program Files\UndyingTerminal\
+    ```
+    
+    You should see:
+    - `undying-terminal-server.exe`
+    - `undying-terminal-terminal.exe`
+    - `undying-terminal.exe`
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+## Basic Usage
+
+### 1. Start the Server
+
+Open a terminal and start the server:
+
+```powershell
+./undying-terminal-server.exe
+```
+
+\u003cInfo\u003e
+By default, the server listens on port `2022`. You can change this in the configuration file.
+\u003c/Info\u003e
+
+Expected output:
+```
+[INFO] Server listening on 0.0.0.0:2022
+[INFO] Named pipe server started: \\.\pipe\undying-terminal
+```
+
+### 2. Start a Terminal
+
+In a **new terminal window**, start a terminal session:
+
+```powershell
+echo "XXX/ignored" | ./undying-terminal-terminal.exe
+```
+
+\u003cNote\u003e
+The `echo "XXX/ignored"` provides a dummy stdin input. The terminal will print its **client ID and passkey** on first run - save these for the next step!
+\u003c/Note\u003e
+
+Expected output:
+```
+[TERMINAL] Client ID: abc123def456
+[TERMINAL] Passkey: 1234567890abcdef
+[TERMINAL] Ready for connection
+```
+
+### 3. Connect the Client
+
+In a **third terminal window**, connect to the session:
+
+```powershell
+./undying-terminal.exe `
+  --connect 127.0.0.1 2022 abc123def456 `
+  --key 1234567890abcdef `
+  --noexit
+```
+
+\u003cCodeGroup\u003e
+```powershell Windows Terminal / PowerShell
+./undying-terminal.exe `
+  --connect 127.0.0.1 2022 \u003cCLIENT_ID\u003e `
+  --key \u003cPASSKEY\u003e `
+  --noexit
+```
+
+```cmd CMD
+undying-terminal.exe --connect 127.0.0.1 2022 \u003cCLIENT_ID\u003e --key \u003cPASSKEY\u003e --noexit
+```
+\u003c/CodeGroup\u003e
+
+You're now connected! Try typing commands - they'll execute in the remote terminal session.
+
+## Testing Session Persistence
+
+Let's verify that your session survives disconnects:
+
+\u003cSteps\u003e
+  \u003cStep title="Start a Long-Running Process"\u003e
+    In your connected terminal, start something that takes time:
+    
+    ```powershell
+    ping -t 8.8.8.8
+    ```
+  \u003c/Step\u003e
+
+  \u003cStep title="Kill the Client"\u003e
+    Close the client terminal window (or press Ctrl+C)
+  \u003c/Step\u003e
+
+  \u003cStep title="Reconnect"\u003e
+    In a new terminal, reconnect using the same command:
+    
+    ```powershell
+    ./undying-terminal.exe `
+      --connect 127.0.0.1 2022 abc123def456 `
+      --key 1234567890abcdef `
+      --noexit
+    ```
+  \u003c/Step\u003e
+
+  \u003cStep title="Verify Recovery"\u003e
+    You should see:
+    - The ping is still running
+    - Recent output is replayed (catchup)
+    - New output continues streaming
+  \u003c/Step\u003e
+\u003c/Steps\u003e
+
+\u003cCheck\u003e
+**Success!** Your session survived the disconnect and recovered seamlessly.
+\u003c/Check\u003e
+
+## One-Shot Commands
+
+Execute a single command without interactive mode:
+
+```powershell
+# Note: include `r`n for cmd.exe newline
+./undying-terminal.exe `
+  --connect 127.0.0.1 2022 \u003cCLIENT_ID\u003e `
+  --key \u003cPASSKEY\u003e `
+  -c "echo Hello World`r`n"
+```
+
+The client will:
+1. Connect to the session
+2. Send the command
+3. Wait for output
+4. Exit when idle
+
+## SSH Bootstrap (Remote Servers)
+
+Connect to a remote server and start a persistent session:
+
+```powershell
+./undying-terminal.exe --ssh user@remote-server.com -l username
+```
+
+This will:
+1. SSH to the remote server
+2. Start `undying-terminal-terminal` remotely
+3. Extract the client ID and passkey
+4. Connect directly via TCP
+5. Keep the session alive even if SSH drops
+
+\u003cTip\u003e
+SSH bootstrap is perfect for remote development servers. After initial setup, your session survives network changes!
+\u003c/Tip\u003e
+
+## Configuration File (Optional)
+
+Create a config file for persistent settings:
+
+\u003cCodeGroup\u003e
+```ini ut.cfg
+# %PROGRAMDATA%\UndyingTerminal\ut.cfg
+
+port=2022
+bind_ip=0.0.0.0
+verbose=false
+shared_key_hex=\u003cyour-hex-key\u003e
+```
+
+```powershell Create Config Directory
+# PowerShell (Run as Administrator)
+$configDir = "$env:PROGRAMDATA\UndyingTerminal"
+New-Item -ItemType Directory -Force -Path $configDir
+```
+\u003c/CodeGroup\u003e
+
+## Next Steps
+
+\u003cCardGroup cols={2}\u003e
+  \u003cCard
+    title="Port Forwarding"
+    icon="right-left"
+    href="/guides/port-forwarding"
+  \u003e
+    Learn how to forward ports through your session
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Jumphost Setup"
+    icon="server"
+    href="/guides/jumphost"
+  \u003e
+    Connect through intermediate servers
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Configuration"
+    icon="gear"
+    href="/config/server-config"
+  \u003e
+    Customize server and client behavior
+  \u003c/Card\u003e
+  
+  \u003cCard
+    title="Windows Service"
+    icon="windows"
+    href="/guides/windows-service"
+  \u003e
+    Run the server as a Windows service
+  \u003c/Card\u003e
+\u003c/CardGroup\u003e
+
+## Troubleshooting
+
+\u003cAccordionGroup\u003e
+  \u003cAccordion title="Server won't start - port already in use"\u003e
+    Check if port 2022 is already in use:
+    
+    ```powershell
+    netstat -ano | findstr :2022
+    ```
+    
+    Either:
+    - Kill the process using the port
+    - Change the port in `ut.cfg`
+    - Use `--port` flag: `./undying-terminal-server.exe --port 2023`
+  \u003c/Accordion\u003e
+
+  \u003cAccordion title="Client can't connect - connection refused"\u003e
+    Verify:
+    1. Server is running (`netstat -ano | findstr :2022`)
+    2. Firewall isn't blocking port 2022
+    3. Client ID and passkey match terminal output
+    
+    Enable verbose logging:
+    ```powershell
+    $env:UT_DEBUG_HANDSHAKE=1
+    ./undying-terminal.exe --connect ...
+    ```
+  \u003c/Accordion\u003e
+
+  \u003cAccordion title="Named pipe errors on multi-server setup"\u003e
+    If running multiple servers on one machine (dev), set unique pipe names:
+    
+    ```powershell
+    # Server 1
+    $env:UT_PIPE_NAME="\\\\.\\pipe\\undying-terminal-2022"
+    ./undying-terminal-server.exe --port 2022
+    
+    # Server 2
+    $env:UT_PIPE_NAME="\\\\.\\pipe\\undying-terminal-2023"
+    ./undying-terminal-server.exe --port 2023
+    ```
+  \u003c/Accordion\u003e
+\u003c/AccordionGroup\u003e
+
+## Summary
+
+You've learned how to:
+
+- Install and run all three components
+- Create and connect to persistent sessions
+- Test session recovery
+- Execute one-shot commands
+- Use SSH bootstrap for remote servers
+
+\u003cTip\u003e
+For production use, consider running the server as a Windows service and enabling encryption via `shared_key_hex` in the config file.
+\u003c/Tip\u003e

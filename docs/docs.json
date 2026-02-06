@@ -1,0 +1,136 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "aspen",
+  "name": "Undying Terminal",
+  "description": "Windows-native persistent terminal that survives disconnects, sleep/wake, and network changes. Like SSH but bulletproof.",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg",
+    "href": "https://undyingterminal.dev"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#fc6505",
+    "light": "#ff8540",
+    "dark": "#d95404"
+  },
+  "background": {
+    "color": {
+      "light": "#fdfcfb",
+      "dark": "#1a1b1e"
+    }
+  },
+  "fonts": {
+    "family": "Fira Mono",
+    "weight": 400
+  },
+  "seo": {
+    "indexing": "all"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/Microck/UndyingTerminal"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Download",
+      "href": "https://github.com/Microck/UndyingTerminal/releases"
+    }
+  },
+  "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Community",
+          "href": "https://discord.gg/undyingterminal"
+        },
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/Microck/UndyingTerminal"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation",
+              "basic-usage"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/persistent-sessions",
+              "concepts/encryption",
+              "concepts/recovery-protocol"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "config/server-config"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "troubleshooting/common-issues",
+              "troubleshooting/faq"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/contributing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "pages": [
+          "guides/ssh-bootstrap",
+          "guides/jumphost",
+          "guides/port-forwarding",
+          "guides/windows-service"
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "pages": [
+          "api-reference/client-cli"
+        ]
+      },
+      {
+        "tab": "Architecture",
+        "pages": [
+          "architecture/overview"
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Microck/UndyingTerminal",
+      "discord": "https://discord.gg/undyingterminal",
+      "twitter": "https://twitter.com/undyingterminal"
+    }
+  },
+  "integrations": {
+    "plausible": {
+      "domain": "undyingterminal.dev"
+    }
+  },
+  "search": {
+    "prompt": "Search documentation..."
+  }
+}
