@@ -7,19 +7,19 @@ description: Forward local and remote ports through persistent sessions
 
 Undying Terminal supports **two types of port forwarding** to tunnel TCP traffic through your persistent session:
 
-\u003cCardGroup cols={2}\u003e
-  \u003cCard title="Forward Tunnels (-t)" icon="arrow-right"\u003e
+<CardGroup cols={2}>
+  <Card title="Forward Tunnels (-t)" icon="arrow-right">
     Client opens local port → forwards to remote destination
     
     **Use case**: Access remote services locally
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard title="Reverse Tunnels (-r)" icon="arrow-left"\u003e
+  <Card title="Reverse Tunnels (-r)" icon="arrow-left">
     Server opens port → client connects to local destination
     
     **Use case**: Expose local services remotely
-  \u003c/Card\u003e
-\u003c/CardGroup\u003e
+  </Card>
+</CardGroup>
 
 Both tunnel types **survive disconnects** and automatically reconnect, making them ideal for unstable networks.
 
@@ -29,14 +29,14 @@ Both tunnel types **survive disconnects** and automatically reconnect, making th
 
 ```powershell
 ./undying-terminal.exe `
-  --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e `
-  --key \u003cPASSKEY\u003e `
-  -t \u003cLOCAL_PORT\u003e:\u003cREMOTE_HOST\u003e:\u003cREMOTE_PORT\u003e
+  --connect <HOST> <PORT> <CLIENT_ID> `
+  --key <PASSKEY> `
+  -t <LOCAL_PORT>:<REMOTE_HOST>:<REMOTE_PORT>
 ```
 
 ### Examples
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Simple Forward
 # Forward local 8080 → remote 9090
 ./undying-terminal.exe `
@@ -77,7 +77,7 @@ Both tunnel types **survive disconnects** and automatically reconnect, making th
 
 # Access via: 192.168.1.50:8080 → remote:9090
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### How Forward Tunnels Work
 
@@ -88,46 +88,46 @@ sequenceDiagram
     participant S as Server
     participant R as Remote Service (9090)
     
-    L-\u003e\u003eC: Connect to localhost:8080
-    C-\u003e\u003eS: PORT_FORWARD_DATA(socketid=1, data)
-    S-\u003e\u003eR: Connect to remote:9090
-    S-\u003e\u003eR: Forward data
-    R-\u003e\u003eS: Response
-    S-\u003e\u003eC: PORT_FORWARD_DATA(socketid=1, response)
-    C-\u003e\u003eL: Forward response
+    L->>C: Connect to localhost:8080
+    C->>S: PORT_FORWARD_DATA(socketid=1, data)
+    S->>R: Connect to remote:9090
+    S->>R: Forward data
+    R->>S: Response
+    S->>C: PORT_FORWARD_DATA(socketid=1, response)
+    C->>L: Forward response
 ```
 
-\u003cSteps\u003e
-  \u003cStep title="Client Opens Listener"\u003e
+<Steps>
+  <Step title="Client Opens Listener">
     Client starts TCP listener on specified local port (e.g., 8080)
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Local Connection Established"\u003e
+  <Step title="Local Connection Established">
     Local application connects to `localhost:8080`
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Tunnel Request Sent"\u003e
+  <Step title="Tunnel Request Sent">
     Client sends `PORT_FORWARD_DESTINATION_REQUEST` to server with:
     - Source: `localhost:8080`
     - Destination: `remote:9090`
     - Socket ID: unique identifier
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Server Connects to Destination"\u003e
+  <Step title="Server Connects to Destination">
     Server establishes TCP connection to `remote:9090`
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Bidirectional Relay"\u003e
+  <Step title="Bidirectional Relay">
     All traffic flows through the session:
     - Local → Client → Server → Remote
     - Remote → Server → Client → Local
-  \u003c/Step\u003e
-\u003c/Steps\u003e
+  </Step>
+</Steps>
 
 ### Use Cases
 
-\u003cAccordionGroup\u003e
-  \u003cAccordion title="Database Access" icon="database"\u003e
+<AccordionGroup>
+  <Accordion title="Database Access" icon="database">
     Forward remote database to local port:
     
     ```powershell
@@ -145,9 +145,9 @@ sequenceDiagram
     ```powershell
     psql -h localhost -p 5432 -U user
     ```
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Web Development" icon="code"\u003e
+  <Accordion title="Web Development" icon="code">
     Access remote development servers:
     
     ```powershell
@@ -159,9 +159,9 @@ sequenceDiagram
     ```
     
     Access via browser: `http://localhost:8080`
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Internal Services" icon="network-wired"\u003e
+  <Accordion title="Internal Services" icon="network-wired">
     Access services behind firewall:
     
     ```powershell
@@ -174,8 +174,8 @@ sequenceDiagram
     # Jenkins
     -t 8080:ci.internal:8080
     ```
-  \u003c/Accordion\u003e
-\u003c/AccordionGroup\u003e
+  </Accordion>
+</AccordionGroup>
 
 ## Reverse Tunnels
 
@@ -183,14 +183,14 @@ sequenceDiagram
 
 ```powershell
 ./undying-terminal.exe `
-  --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e `
-  --key \u003cPASSKEY\u003e `
-  -r \u003cREMOTE_PORT\u003e:\u003cLOCAL_HOST\u003e:\u003cLOCAL_PORT\u003e
+  --connect <HOST> <PORT> <CLIENT_ID> `
+  --key <PASSKEY> `
+  -r <REMOTE_PORT>:<LOCAL_HOST>:<LOCAL_PORT>
 ```
 
 ### Examples
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Simple Reverse
 # Server listens on 3000, forwards to client's localhost:8000
 ./undying-terminal.exe `
@@ -220,7 +220,7 @@ sequenceDiagram
   -r 9090:localhost:5000 `
   -r 5432:localhost:5432
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### How Reverse Tunnels Work
 
@@ -231,45 +231,45 @@ sequenceDiagram
     participant C as Client
     participant L as Local Service (8000)
     
-    R-\u003e\u003eS: Connect to server:3000
-    S-\u003e\u003eC: PORT_FORWARD_DESTINATION_REQUEST(socketid=1)
-    C-\u003e\u003eL: Connect to localhost:8000
-    R-\u003e\u003eS: Send data
-    S-\u003e\u003eC: PORT_FORWARD_DATA(socketid=1, data)
-    C-\u003e\u003eL: Forward data
-    L-\u003e\u003eC: Response
-    C-\u003e\u003eS: PORT_FORWARD_DATA(socketid=1, response)
-    S-\u003e\u003eR: Forward response
+    R->>S: Connect to server:3000
+    S->>C: PORT_FORWARD_DESTINATION_REQUEST(socketid=1)
+    C->>L: Connect to localhost:8000
+    R->>S: Send data
+    S->>C: PORT_FORWARD_DATA(socketid=1, data)
+    C->>L: Forward data
+    L->>C: Response
+    C->>S: PORT_FORWARD_DATA(socketid=1, response)
+    S->>R: Forward response
 ```
 
-\u003cSteps\u003e
-  \u003cStep title="Server Opens Listener"\u003e
+<Steps>
+  <Step title="Server Opens Listener">
     Server starts TCP listener on specified remote port (e.g., 3000)
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Remote Connection Established"\u003e
+  <Step title="Remote Connection Established">
     Remote user connects to `server:3000`
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Destination Request Sent"\u003e
+  <Step title="Destination Request Sent">
     Server sends `PORT_FORWARD_DESTINATION_REQUEST` to client with socket ID
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Client Connects Locally"\u003e
+  <Step title="Client Connects Locally">
     Client establishes connection to specified local destination (e.g., `localhost:8000`)
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Bidirectional Relay"\u003e
+  <Step title="Bidirectional Relay">
     Traffic flows:
     - Remote → Server → Client → Local
     - Local → Client → Server → Remote
-  \u003c/Step\u003e
-\u003c/Steps\u003e
+  </Step>
+</Steps>
 
 ### Use Cases
 
-\u003cAccordionGroup\u003e
-  \u003cAccordion title="Development Webhooks" icon="webhook"\u003e
+<AccordionGroup>
+  <Accordion title="Development Webhooks" icon="webhook">
     Expose local dev server for webhooks (GitHub, Stripe, etc.):
     
     ```powershell
@@ -278,9 +278,9 @@ sequenceDiagram
     ```
     
     Configure webhook URL: `http://remote-server.com:80/webhook`
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Demo/Staging" icon="presentation-screen"\u003e
+  <Accordion title="Demo/Staging" icon="presentation-screen">
     Share local development with team:
     
     ```powershell
@@ -289,9 +289,9 @@ sequenceDiagram
     ```
     
     Team access: `http://remote-server.com:8080`
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Remote Desktop / VNC" icon="desktop"\u003e
+  <Accordion title="Remote Desktop / VNC" icon="desktop">
     Access local machine from remote network:
     
     ```powershell
@@ -304,8 +304,8 @@ sequenceDiagram
     # SSH to local machine
     -r 2222:localhost:22
     ```
-  \u003c/Accordion\u003e
-\u003c/AccordionGroup\u003e
+  </Accordion>
+</AccordionGroup>
 
 ## Multiple Tunnels
 
@@ -341,35 +341,35 @@ Combine forward and reverse tunnels:
 | `192.168.1.x` | Accessible from specific interface |
 | `127.0.0.1` | Explicit localhost |
 
-\u003cWarning\u003e
+<Warning>
 **Security**: Binding to `0.0.0.0` exposes the tunnel to your network. Use with caution!
-\u003c/Warning\u003e
+</Warning>
 
 ## Tunnel Persistence
 
 Tunnels **survive disconnects**:
 
-\u003cSteps\u003e
-  \u003cStep title="Initial Connection"\u003e
+<Steps>
+  <Step title="Initial Connection">
     Client connects, tunnels established
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Network Interruption"\u003e
+  <Step title="Network Interruption">
     Network drops, client disconnects
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Automatic Reconnect"\u003e
+  <Step title="Automatic Reconnect">
     Client reconnects automatically
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Tunnels Restored"\u003e
+  <Step title="Tunnels Restored">
     All tunnels re-established transparently
-  \u003c/Step\u003e
-\u003c/Steps\u003e
+  </Step>
+</Steps>
 
-\u003cCheck\u003e
+<Check>
 Active connections through tunnels are **not preserved** during disconnect. However, new connections work immediately after reconnect.
-\u003c/Check\u003e
+</Check>
 
 ## Environment Variable Forwarding
 
@@ -385,8 +385,8 @@ Useful for scripting and automation.
 
 ## Troubleshooting
 
-\u003cAccordionGroup\u003e
-  \u003cAccordion title="Tunnel not working - connection refused"\u003e
+<AccordionGroup>
+  <Accordion title="Tunnel not working - connection refused">
     **Symptoms**: Local/remote service unreachable
     
     **Diagnosis**:
@@ -399,9 +399,9 @@ Useful for scripting and automation.
     3. Verify bind address (localhost vs 0.0.0.0)
     
     **Solution**: Ensure destination service is accessible from server
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Port already in use"\u003e
+  <Accordion title="Port already in use">
     **Error**: `bind: address already in use`
     
     **Diagnosis**:
@@ -413,9 +413,9 @@ Useful for scripting and automation.
     - Choose different local port
     - Kill process using the port
     - Use specific bind address (not 0.0.0.0)
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Slow tunnel performance"\u003e
+  <Accordion title="Slow tunnel performance">
     **Symptoms**: High latency, slow transfers
     
     **Causes**:
@@ -427,81 +427,81 @@ Useful for scripting and automation.
     - Use direct network path when possible
     - Reduce keepalive frequency
     - Check network quality (ping, traceroute)
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Tunnel breaks after reconnect"\u003e
+  <Accordion title="Tunnel breaks after reconnect">
     **Expected Behavior**: Active connections drop, new connections work
     
     **Explanation**: TCP connections can't survive both endpoints changing. Undying Terminal restores the tunnel infrastructure, but application-level connections must be re-established.
     
     **Workaround**: Applications should implement reconnect logic
-  \u003c/Accordion\u003e
-\u003c/AccordionGroup\u003e
+  </Accordion>
+</AccordionGroup>
 
 ## Best Practices
 
-\u003cCardGroup cols={2}\u003e
-  \u003cCard title="Security" icon="shield"\u003e
+<CardGroup cols={2}>
+  <Card title="Security" icon="shield">
     - Use `localhost` bind when possible
     - Enable encryption for internet-facing tunnels
     - Restrict server firewall rules
     - Use strong passkeys
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard title="Performance" icon="gauge-high"\u003e
+  <Card title="Performance" icon="gauge-high">
     - Minimize tunnel hops (use direct paths)
     - Use port ranges for efficiency
     - Monitor bandwidth usage
     - Test latency impact
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard title="Reliability" icon="circle-check"\u003e
+  <Card title="Reliability" icon="circle-check">
     - Design for reconnect (don't rely on persistent connections)
     - Use health checks in applications
     - Log tunnel status
     - Monitor connection stability
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard title="Organization" icon="list"\u003e
+  <Card title="Organization" icon="list">
     - Document tunnel mappings
     - Use consistent port conventions
     - Group related tunnels
     - Version tunnel configurations
-  \u003c/Card\u003e
-\u003c/CardGroup\u003e
+  </Card>
+</CardGroup>
 
 ## Next Steps
 
-\u003cCardGroup cols={2}\u003e
-  \u003cCard
+<CardGroup cols={2}>
+  <Card
     title="Jumphost Guide"
     icon="server"
     href="/guides/jumphost"
-  \u003e
+  >
     Connect through intermediate servers
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="SSH Bootstrap"
     icon="terminal"
     href="/guides/ssh-bootstrap"
-  \u003e
+  >
     Start remote sessions over SSH
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Client CLI Reference"
     icon="rectangle-terminal"
     href="/api-reference/client-cli"
-  \u003e
+  >
     Full CLI options
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Architecture"
     icon="diagram-project"
     href="/architecture/overview"
-  \u003e
+  >
     How tunnels work internally
-  \u003c/Card\u003e
-\u003c/CardGroup\u003e
+  </Card>
+</CardGroup>

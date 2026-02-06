@@ -7,34 +7,34 @@ description: Common workflows and everyday usage patterns
 
 ### Starting Your Day
 
-\u003cSteps\u003e
-  \u003cStep title="Start Server (if not running as service)"\u003e
+<Steps>
+  <Step title="Start Server (if not running as service)">
     ```powershell
     ./undying-terminal-server.exe
     ```
     
     Leave this running in a dedicated terminal window.
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Start Terminal Session"\u003e
+  <Step title="Start Terminal Session">
     ```powershell
     echo "XXX" | ./undying-terminal-terminal.exe
     ```
     
     **First run only**: Save the client ID and passkey shown.
-  \u003c/Step\u003e
+  </Step>
   
-  \u003cStep title="Connect Client"\u003e
+  <Step title="Connect Client">
     ```powershell
     ./undying-terminal.exe `
-      --connect 127.0.0.1 2022 \u003cCLIENT_ID\u003e `
-      --key \u003cPASSKEY\u003e `
+      --connect 127.0.0.1 2022 <CLIENT_ID> `
+      --key <PASSKEY> `
       --noexit
     ```
     
     **Tip**: Save this command in a script for quick access.
-  \u003c/Step\u003e
-\u003c/Steps\u003e
+  </Step>
+</Steps>
 
 ### Ending Your Day
 
@@ -52,8 +52,8 @@ Tomorrow:
 ```powershell
 # Standard interactive connection
 ./undying-terminal.exe `
-  --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e `
-  --key \u003cPASSKEY\u003e `
+  --connect <HOST> <PORT> <CLIENT_ID> `
+  --key <PASSKEY> `
   --noexit
 ```
 
@@ -67,14 +67,14 @@ Use this for:
 ```powershell
 # Execute single command and exit
 ./undying-terminal.exe `
-  --connect \u003cHOST\u003e \u003cPORT\u003e \u003cCLIENT_ID\u003e `
-  --key \u003cPASSKEY\u003e `
+  --connect <HOST> <PORT> <CLIENT_ID> `
+  --key <PASSKEY> `
   -c "dir`r`n"
 ```
 
-\u003cNote\u003e
+<Note>
 Include `` `r`n`` (carriage return + newline) for cmd.exe to execute the command.
-\u003c/Note\u003e
+</Note>
 
 ### SSH Bootstrap (Remote Servers)
 
@@ -94,7 +94,7 @@ This:
 
 ### Scenario 1: Development Workflow
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Start Dev Environment
 # Terminal 1: Server
 ./undying-terminal-server.exe
@@ -105,8 +105,8 @@ echo "dev-session" | ./undying-terminal-terminal.exe
 
 # Terminal 3: Connect with tunnels
 ./undying-terminal.exe `
-  --connect 127.0.0.1 2022 \u003cCLIENT_ID\u003e `
-  --key \u003cPASSKEY\u003e `
+  --connect 127.0.0.1 2022 <CLIENT_ID> `
+  --key <PASSKEY> `
   -t 5432:db-server:5432 `     # Database
   -t 6379:redis-server:6379 `  # Redis
   -t 3000:api-server:3000 `    # API
@@ -120,11 +120,11 @@ npm run dev
 
 # Close laptop, go home
 # Next day: reconnect (same command)
-./undying-terminal.exe --connect 127.0.0.1 2022 \u003cID\u003e --key \u003cKEY\u003e --noexit
+./undying-terminal.exe --connect 127.0.0.1 2022 <ID> --key <KEY> --noexit
 
 # Your npm dev server is still running!
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### Scenario 2: Long-Running Builds
 
@@ -143,7 +143,7 @@ cmake --build . --config Release
 
 ### Scenario 3: Remote Administration
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Setup Remote Session
 # From workstation, bootstrap to server
 ./undying-terminal.exe --ssh admin@prod-server.com -l admin
@@ -161,9 +161,9 @@ cmake --build . --config Release
 # Session continues running
 
 # Reconnect later to check status
-./undying-terminal.exe --connect prod-server.com 2022 \u003cID\u003e --key \u003cKEY\u003e
+./undying-terminal.exe --connect prod-server.com 2022 <ID> --key <KEY>
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### Scenario 4: Unstable Network Environments
 
@@ -187,7 +187,7 @@ python train-model.py  # Takes 6 hours
 
 Run multiple independent sessions:
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Session 1: Development
 # Terminal 1
 echo "dev" | ./undying-terminal-terminal.exe
@@ -206,7 +206,7 @@ echo "prod" | ./undying-terminal-terminal.exe
 # Connect to prod session
 ./undying-terminal.exe --connect 127.0.0.1 2022 prod-001 --key def456 --noexit
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ### Session Discovery
 
@@ -235,9 +235,9 @@ Prod Session:
 | `Ctrl+D` | Send EOF (may exit shell) |
 | `Ctrl+Z` | Suspend (Windows behavior) |
 
-\u003cWarning\u003e
+<Warning>
 **Exiting the shell** (e.g., `exit` or `Ctrl+D`) will **terminate the terminal process**. This ends the session! Use client disconnect instead.
-\u003c/Warning\u003e
+</Warning>
 
 ## Disconnecting vs. Exiting
 
@@ -269,9 +269,9 @@ Ctrl+D
 - Session ends
 - Must restart terminal
 
-\u003cTip\u003e
+<Tip>
 **Best practice**: Always disconnect the client, never exit the shell.
-\u003c/Tip\u003e
+</Tip>
 
 ## Scripting and Automation
 
@@ -279,7 +279,7 @@ Ctrl+D
 
 Save frequently-used connections:
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell connect-dev.ps1
 # connect-dev.ps1
 $clientId = "abc123def456"
@@ -303,7 +303,7 @@ $passkey = "prod-passkey"
   --key $passkey `
   --noexit
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 Usage:
 ```powershell
@@ -312,7 +312,7 @@ Usage:
 
 ### Automated Commands
 
-\u003cCodeGroup\u003e
+<CodeGroup>
 ```powershell Run Command Script
 # run-backup.ps1
 $clientId = "server-backup"
@@ -337,7 +337,7 @@ Register-ScheduledTask `
   -Action $action `
   -Trigger $trigger
 ```
-\u003c/CodeGroup\u003e
+</CodeGroup>
 
 ## Monitoring and Logging
 
@@ -367,8 +367,8 @@ tasklist | findstr undying-terminal-terminal
 
 ## Tips and Tricks
 
-\u003cAccordionGroup\u003e
-  \u003cAccordion title="Reconnect Faster" icon="bolt"\u003e
+<AccordionGroup>
+  <Accordion title="Reconnect Faster" icon="bolt">
     When you know you'll reconnect soon:
     
     ```powershell
@@ -382,9 +382,9 @@ tasklist | findstr undying-terminal-terminal
       --key $env:UT_PASSKEY `
       --noexit
     ```
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Run Server as Background Job" icon="circle-play"\u003e
+  <Accordion title="Run Server as Background Job" icon="circle-play">
     ```powershell
     # PowerShell background job
     Start-Job -ScriptBlock {
@@ -399,12 +399,12 @@ tasklist | findstr undying-terminal-terminal
     Get-Job | Stop-Job
     ```
     
-    \u003cNote\u003e
+    <Note>
     Better: Install as Windows service for production.
-    \u003c/Note\u003e
-  \u003c/Accordion\u003e
+    </Note>
+  </Accordion>
   
-  \u003cAccordion title="Test Session Recovery" icon="flask"\u003e
+  <Accordion title="Test Session Recovery" icon="flask">
     ```powershell
     # 1. Start long-running command
     ping -t 8.8.8.8
@@ -419,9 +419,9 @@ tasklist | findstr undying-terminal-terminal
     
     # 5. Verify: ping output continues, recent history replayed
     ```
-  \u003c/Accordion\u003e
+  </Accordion>
   
-  \u003cAccordion title="Reduce Keepalive Traffic" icon="signal"\u003e
+  <Accordion title="Reduce Keepalive Traffic" icon="signal">
     For bandwidth-constrained networks:
     
     ```cpp
@@ -431,41 +431,41 @@ tasklist | findstr undying-terminal-terminal
     ```
     
     Rebuild and use custom binary.
-  \u003c/Accordion\u003e
-\u003c/AccordionGroup\u003e
+  </Accordion>
+</AccordionGroup>
 
 ## Next Steps
 
-\u003cCardGroup cols={2}\u003e
-  \u003cCard
+<CardGroup cols={2}>
+  <Card
     title="Port Forwarding"
     icon="right-left"
     href="/guides/port-forwarding"
-  \u003e
+  >
     Tunnel local and remote ports
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="SSH Bootstrap"
     icon="terminal"
     href="/guides/ssh-bootstrap"
-  \u003e
+  >
     Start remote sessions via SSH
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Configuration"
     icon="gear"
     href="/config/server-config"
-  \u003e
+  >
     Customize server behavior
-  \u003c/Card\u003e
+  </Card>
   
-  \u003cCard
+  <Card
     title="Troubleshooting"
     icon="wrench"
     href="/troubleshooting/common-issues"
-  \u003e
+  >
     Solve common problems
-  \u003c/Card\u003e
-\u003c/CardGroup\u003e
+  </Card>
+</CardGroup>
