@@ -12,7 +12,7 @@ bool DebugTunnel() {
 PortForwardHandler::PortForwardHandler(std::shared_ptr<TcpSocketHandler> socket_handler, bool server_side)
     : socket_handler_(std::move(socket_handler)), server_side_(server_side) {}
 
-void PortForwardHandler::AddForwardRequest(const et::PortForwardSourceRequest& request) {
+void PortForwardHandler::AddForwardRequest(const ut::PortForwardSourceRequest& request) {
   if (server_side_) {
     return;
   }
@@ -60,14 +60,14 @@ void PortForwardHandler::HandleClientData(const std::function<void(const Packet&
                 << ":" << listener.destination.port() << "\n";
     }
 
-    et::PortForwardDestinationRequest req;
+    ut::PortForwardDestinationRequest req;
     *req.mutable_destination() = listener.destination;
     req.set_fd(client_fd);
     std::string payload;
     if (!req.SerializeToString(&payload)) {
       continue;
     }
-    send_packet(Packet(static_cast<uint8_t>(et::PORT_FORWARD_DESTINATION_REQUEST), payload));
+    send_packet(Packet(static_cast<uint8_t>(ut::PORT_FORWARD_DESTINATION_REQUEST), payload));
   }
 
   for (auto& entry : active_sockets_) {
@@ -79,18 +79,18 @@ void PortForwardHandler::HandleClientData(const std::function<void(const Packet&
     char buffer[4096] = {};
     const int rc = socket_handler_->Read(local_socket, buffer, sizeof(buffer));
     if (rc <= 0) {
-      et::PortForwardData data;
+      ut::PortForwardData data;
       data.set_socketid(socket_id);
       data.set_sourcetodestination(true);
       data.set_closed(true);
       std::string payload;
       if (data.SerializeToString(&payload)) {
-        send_packet(Packet(static_cast<uint8_t>(et::PORT_FORWARD_DATA), payload));
+        send_packet(Packet(static_cast<uint8_t>(ut::PORT_FORWARD_DATA), payload));
       }
       socket_handler_->Close(local_socket);
       continue;
     }
-    et::PortForwardData data;
+    ut::PortForwardData data;
     data.set_socketid(socket_id);
     data.set_sourcetodestination(true);
     data.set_buffer(std::string(buffer, buffer + rc));
@@ -100,7 +100,7 @@ void PortForwardHandler::HandleClientData(const std::function<void(const Packet&
         std::cerr << "[tunnel] client_data socket_id=" << socket_id
                   << " bytes=" << rc << "\n";
       }
-      send_packet(Packet(static_cast<uint8_t>(et::PORT_FORWARD_DATA), payload));
+      send_packet(Packet(static_cast<uint8_t>(ut::PORT_FORWARD_DATA), payload));
     }
   }
 }
@@ -115,18 +115,18 @@ void PortForwardHandler::HandleServerData(const std::function<void(const Packet&
     char buffer[4096] = {};
     const int rc = socket_handler_->Read(remote_socket, buffer, sizeof(buffer));
     if (rc <= 0) {
-      et::PortForwardData data;
+      ut::PortForwardData data;
       data.set_socketid(socket_id);
       data.set_sourcetodestination(false);
       data.set_closed(true);
       std::string payload;
       if (data.SerializeToString(&payload)) {
-        send_packet(Packet(static_cast<uint8_t>(et::PORT_FORWARD_DATA), payload));
+        send_packet(Packet(static_cast<uint8_t>(ut::PORT_FORWARD_DATA), payload));
       }
       socket_handler_->Close(remote_socket);
       continue;
     }
-    et::PortForwardData data;
+    ut::PortForwardData data;
     data.set_socketid(socket_id);
     data.set_sourcetodestination(false);
     data.set_buffer(std::string(buffer, buffer + rc));
@@ -136,14 +136,14 @@ void PortForwardHandler::HandleServerData(const std::function<void(const Packet&
         std::cerr << "[tunnel] server_data socket_id=" << socket_id
                   << " bytes=" << rc << "\n";
       }
-      send_packet(Packet(static_cast<uint8_t>(et::PORT_FORWARD_DATA), payload));
+      send_packet(Packet(static_cast<uint8_t>(ut::PORT_FORWARD_DATA), payload));
     }
   }
 }
 
 void PortForwardHandler::HandlePacket(const Packet& packet, const std::function<void(const Packet&)>& send_packet) {
-  if (packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DESTINATION_RESPONSE)) {
-    et::PortForwardDestinationResponse response;
+  if (packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DESTINATION_RESPONSE)) {
+    ut::PortForwardDestinationResponse response;
     if (!response.ParseFromString(packet.payload())) {
       return;
     }
@@ -169,8 +169,8 @@ void PortForwardHandler::HandlePacket(const Packet& packet, const std::function<
     return;
   }
 
-  if (packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DESTINATION_REQUEST) && server_side_) {
-    et::PortForwardDestinationRequest request;
+  if (packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DESTINATION_REQUEST) && server_side_) {
+    ut::PortForwardDestinationRequest request;
     if (!request.ParseFromString(packet.payload())) {
       return;
     }
@@ -183,7 +183,7 @@ void PortForwardHandler::HandlePacket(const Packet& packet, const std::function<
                 << ":" << request.destination().port() << "\n";
     }
     SocketHandle remote_socket = socket_handler_->Connect(request.destination().name(), request.destination().port());
-    et::PortForwardDestinationResponse response;
+    ut::PortForwardDestinationResponse response;
     response.set_clientfd(request.fd());
     if (remote_socket == kInvalidSocket) {
       response.set_error("connect failed");
@@ -194,13 +194,13 @@ void PortForwardHandler::HandlePacket(const Packet& packet, const std::function<
     }
     std::string payload;
     if (response.SerializeToString(&payload)) {
-      send_packet(Packet(static_cast<uint8_t>(et::PORT_FORWARD_DESTINATION_RESPONSE), payload));
+      send_packet(Packet(static_cast<uint8_t>(ut::PORT_FORWARD_DESTINATION_RESPONSE), payload));
     }
     return;
   }
 
-  if (packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DATA)) {
-    et::PortForwardData data;
+  if (packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DATA)) {
+    ut::PortForwardData data;
     if (!data.ParseFromString(packet.payload())) {
       return;
     }

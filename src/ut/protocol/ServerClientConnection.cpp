@@ -1,6 +1,6 @@
 #include "ServerClientConnection.hpp"
 
-#include "EtConstants.hpp"
+#include "UtConstants.hpp"
 
 namespace ut {
 ServerClientConnection::ServerClientConnection(std::shared_ptr<TcpSocketHandler> socket_handler,
@@ -10,10 +10,10 @@ ServerClientConnection::ServerClientConnection(std::shared_ptr<TcpSocketHandler>
     : Connection(std::move(socket_handler), client_id, key) {
   socket_ = socket;
   reader_ = std::make_shared<BackedReader>(socket_handler_,
-                                           std::make_shared<CryptoHandler>(key_, et::kClientServerNonceMsb),
+                                           std::make_shared<CryptoHandler>(key_, ut::kClientServerNonceMsb),
                                            socket_);
   writer_ = std::make_shared<BackedWriter>(socket_handler_,
-                                           std::make_shared<CryptoHandler>(key_, et::kServerClientNonceMsb),
+                                           std::make_shared<CryptoHandler>(key_, ut::kServerClientNonceMsb),
                                            socket_);
 }
 }

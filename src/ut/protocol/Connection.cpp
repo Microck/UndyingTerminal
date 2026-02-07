@@ -3,7 +3,7 @@
 #include <chrono>
 #include <thread>
 
-#include "ET.pb.h"
+#include "UT.pb.h"
 
 namespace ut {
 Connection::Connection(std::shared_ptr<SocketHandler> socket_handler,
@@ -92,20 +92,20 @@ bool Connection::Recover(SocketHandle new_socket) {
   std::lock_guard<std::mutex> reader_guard(reader_->recover_mutex());
   std::lock_guard<std::mutex> writer_guard(writer_->recover_mutex());
   try {
-    et::SequenceHeader header;
+    ut::SequenceHeader header;
     header.set_sequencenumber(static_cast<int32_t>(reader_->sequence_number()));
     socket_handler_->WriteProto(new_socket, header, true);
 
-    et::SequenceHeader remote = socket_handler_->ReadProto<et::SequenceHeader>(new_socket, true);
+    ut::SequenceHeader remote = socket_handler_->ReadProto<ut::SequenceHeader>(new_socket, true);
 
-    et::CatchupBuffer catchup;
+    ut::CatchupBuffer catchup;
     std::vector<std::string> recovered = writer_->Recover(remote.sequencenumber());
     for (const auto& entry : recovered) {
       catchup.add_buffer(entry);
     }
     socket_handler_->WriteProto(new_socket, catchup, true);
 
-    et::CatchupBuffer inbound = socket_handler_->ReadProto<et::CatchupBuffer>(new_socket, true);
+    ut::CatchupBuffer inbound = socket_handler_->ReadProto<ut::CatchupBuffer>(new_socket, true);
     std::vector<std::string> inbound_msgs(inbound.buffer().begin(), inbound.buffer().end());
 
     socket_ = new_socket;

@@ -6,13 +6,13 @@
 #include "Connection.hpp"
 #include "TcpSocketHandler.hpp"
 
-#include "ET.pb.h"
+#include "UT.pb.h"
 
 namespace ut {
 class ClientConnection : public Connection {
  public:
   ClientConnection(std::shared_ptr<TcpSocketHandler> socket_handler,
-                   const et::SocketEndpoint& remote,
+                   const ut::SocketEndpoint& remote,
                    const std::string& id,
                    const std::string& key);
   ~ClientConnection() override;
@@ -29,7 +29,7 @@ class ClientConnection : public Connection {
   void WaitReconnect();
 
    std::shared_ptr<TcpSocketHandler> tcp_handler_;
-   et::SocketEndpoint remote_;
+   ut::SocketEndpoint remote_;
    std::shared_ptr<std::thread> reconnect_thread_;
    bool reconnect_enabled_ = true;
    bool returning_client_ = false;

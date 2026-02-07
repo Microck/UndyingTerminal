@@ -37,7 +37,7 @@ BackedWriterWriteState BackedWriter::Write(Packet packet) {
     backup_size_ += static_cast<int64_t>(packet.length());
     sequence_number_++;
 
-    while (backup_size_ > et::kMaxBackupBytes && !backup_buffer_.empty()) {
+    while (backup_size_ > ut::kMaxBackupBytes && !backup_buffer_.empty()) {
       backup_size_ -= static_cast<int64_t>(backup_buffer_.back().length());
       backup_buffer_.pop_back();
     }

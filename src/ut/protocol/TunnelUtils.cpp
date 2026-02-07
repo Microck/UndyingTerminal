@@ -25,7 +25,7 @@ bool IsNumericOrRange(const std::string& input) {
   return true;
 }
 
-void ProcessEtStyleArg(std::vector<et::PortForwardSourceRequest>& out,
+void ProcessUtStyleArg(std::vector<ut::PortForwardSourceRequest>& out,
                        const std::vector<std::string>& source_dest,
                        const std::string& input) {
   if (source_dest.size() < 2) {
@@ -36,7 +36,7 @@ void ProcessEtStyleArg(std::vector<et::PortForwardSourceRequest>& out,
   const std::string& dest = source_dest[1];
 
   if (!IsNumericOrRange(source) && !IsNumericOrRange(dest)) {
-    et::PortForwardSourceRequest req;
+    ut::PortForwardSourceRequest req;
     req.set_environmentvariable(source);
     req.mutable_destination()->set_name(dest);
     out.push_back(req);
@@ -57,7 +57,7 @@ void ProcessEtStyleArg(std::vector<et::PortForwardSourceRequest>& out,
     }
     const int length = source_end - source_start + 1;
     for (int i = 0; i < length; ++i) {
-      et::PortForwardSourceRequest req;
+      ut::PortForwardSourceRequest req;
       req.mutable_source()->set_name("localhost");
       req.mutable_source()->set_port(source_start + i);
       req.mutable_destination()->set_port(dest_start + i);
@@ -71,7 +71,7 @@ void ProcessEtStyleArg(std::vector<et::PortForwardSourceRequest>& out,
         "Invalid port range syntax: if source is a range, destination must be a range (and vice versa)");
   }
 
-  et::PortForwardSourceRequest req;
+  ut::PortForwardSourceRequest req;
   req.mutable_source()->set_name("localhost");
   req.mutable_source()->set_port(std::stoi(source));
   req.mutable_destination()->set_port(std::stoi(dest));
@@ -116,25 +116,25 @@ std::vector<std::string> ParseSshTunnelArg(const std::string& input) {
   return parts;
 }
 
-std::vector<et::PortForwardSourceRequest> ParseRangesToRequests(const std::string& input) {
-  std::vector<et::PortForwardSourceRequest> out;
+std::vector<ut::PortForwardSourceRequest> ParseRangesToRequests(const std::string& input) {
+  std::vector<ut::PortForwardSourceRequest> out;
   auto comma_parts = Split(input, ',');
   if (comma_parts.size() > 1) {
     for (const auto& part : comma_parts) {
       auto source_dest = Split(part, ':');
-      ProcessEtStyleArg(out, source_dest, input);
+      ProcessUtStyleArg(out, source_dest, input);
     }
     return out;
   }
 
   auto source_dest = Split(input, ':');
   if (source_dest.size() <= 2) {
-    ProcessEtStyleArg(out, source_dest, input);
+    ProcessUtStyleArg(out, source_dest, input);
     return out;
   }
 
   auto ssh_parts = ParseSshTunnelArg(input);
-  et::PortForwardSourceRequest req;
+  ut::PortForwardSourceRequest req;
   req.mutable_source()->set_name(ssh_parts[0]);
   req.mutable_source()->set_port(std::stoi(ssh_parts[1]));
   req.mutable_destination()->set_name(ssh_parts[2]);
