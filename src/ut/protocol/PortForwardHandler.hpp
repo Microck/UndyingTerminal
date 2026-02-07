@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ETerminal.pb.h"
+#include "UTerminal.pb.h"
 #include "Packet.hpp"
 #include "TcpSocketHandler.hpp"
 
@@ -15,14 +15,14 @@ class PortForwardHandler {
  public:
   PortForwardHandler(std::shared_ptr<TcpSocketHandler> socket_handler, bool server_side);
 
-  void AddForwardRequest(const et::PortForwardSourceRequest& request);
+  void AddForwardRequest(const ut::PortForwardSourceRequest& request);
   void Update(const std::function<void(const Packet&)>& send_packet);
   void HandlePacket(const Packet& packet, const std::function<void(const Packet&)>& send_packet);
 
  private:
   struct Listener {
     SocketHandle listen_socket = kInvalidSocket;
-    et::SocketEndpoint destination;
+    ut::SocketEndpoint destination;
   };
 
   void HandleClientData(const std::function<void(const Packet&)>& send_packet);

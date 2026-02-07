@@ -28,7 +28,8 @@ deps/
 
 # generated protobuf in build/ is source in this repo
 build/*
-!build/ET.pb.cc
-!build/ET.pb.h
-!build/ETerminal.pb.cc
-!build/ETerminal.pb.h
+!build/
+!build/UT.pb.cc
+!build/UT.pb.h
+!build/UTerminal.pb.cc
+!build/UTerminal.pb.h

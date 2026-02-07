@@ -7,12 +7,12 @@
 #include <vector>
 
 #include "ConPTYSession.hpp"
-#include "et/ClientConnection.hpp"
-#include "et/PipeSocketHandler.hpp"
-#include "et/Packet.hpp"
-#include "et/TcpSocketHandler.hpp"
-#include "ET.pb.h"
-#include "ETerminal.pb.h"
+#include "protocol/ClientConnection.hpp"
+#include "protocol/PipeSocketHandler.hpp"
+#include "protocol/Packet.hpp"
+#include "protocol/TcpSocketHandler.hpp"
+#include "UT.pb.h"
+#include "UTerminal.pb.h"
 
 #ifdef _WIN32
 namespace {
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  et::TerminalUserInfo tui;
+  ut::TerminalUserInfo tui;
   tui.set_id(client_id);
   tui.set_passkey(passkey_final);
   std::string tui_payload;
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     std::cerr << "Failed to serialize TerminalUserInfo\n";
     return 1;
   }
-  ut::Packet tui_packet(static_cast<uint8_t>(et::TERMINAL_USER_INFO), tui_payload);
+  ut::Packet tui_packet(static_cast<uint8_t>(ut::TERMINAL_USER_INFO), tui_payload);
   pipe_handler.WritePacket(pipe, tui_packet);
   if (DebugHandshake()) {
     std::cerr << "[handshake] terminal_registered id_len=" << client_id.size()
@@ -115,13 +115,13 @@ int main(int argc, char** argv) {
     std::cerr << "Failed to read init packet\n";
     return 1;
   }
-  if (init_packet.header() != static_cast<uint8_t>(jump_mode ? et::JUMPHOST_INIT : et::TERMINAL_INIT)) {
+  if (init_packet.header() != static_cast<uint8_t>(jump_mode ? ut::JUMPHOST_INIT : ut::TERMINAL_INIT)) {
     std::cerr << "Unexpected init packet\n";
     return 1;
   }
 
   if (jump_mode) {
-    et::InitialPayload payload;
+    ut::InitialPayload payload;
     if (!payload.ParseFromString(init_packet.payload())) {
       std::cerr << "Invalid jumphost init payload\n";
       return 1;
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
     }
 
     auto socket_handler = std::make_shared<ut::TcpSocketHandler>();
-    et::SocketEndpoint endpoint;
+    ut::SocketEndpoint endpoint;
     endpoint.set_name(host_it->second);
     endpoint.set_port(dst_port);
 
@@ -155,15 +155,15 @@ int main(int argc, char** argv) {
     payload.set_jumphost(false);
     std::string payload_bytes;
     payload.SerializeToString(&payload_bytes);
-    dest_connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::INITIAL_PAYLOAD), payload_bytes));
+    dest_connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::INITIAL_PAYLOAD), payload_bytes));
 
     ut::Packet response_packet;
     if (!dest_connection.ReadPacket(&response_packet) ||
-        response_packet.header() != static_cast<uint8_t>(et::INITIAL_RESPONSE)) {
+        response_packet.header() != static_cast<uint8_t>(ut::INITIAL_RESPONSE)) {
       std::cerr << "Missing destination initial response\n";
       return 1;
     }
-    et::InitialResponse response;
+    ut::InitialResponse response;
     if (!response.ParseFromString(response_packet.payload()) || !response.error().empty()) {
       std::cerr << "Destination initial response error: " << response.error() << "\n";
       return 1;
@@ -228,8 +228,8 @@ int main(int argc, char** argv) {
   std::thread input_thread([&]() {
     ut::Packet packet;
     while (session.IsRunning() && pipe_handler.ReadPacket(pipe, &packet)) {
-      if (packet.header() == static_cast<uint8_t>(et::TERMINAL_BUFFER)) {
-        et::TerminalBuffer tb;
+      if (packet.header() == static_cast<uint8_t>(ut::TERMINAL_BUFFER)) {
+        ut::TerminalBuffer tb;
         if (!tb.ParseFromString(packet.payload())) {
           continue;
         }
@@ -238,8 +238,8 @@ int main(int argc, char** argv) {
         }
         DWORD written = 0;
         WriteFile(session.InputWriteHandle(), tb.buffer().data(), static_cast<DWORD>(tb.buffer().size()), &written, nullptr);
-      } else if (packet.header() == static_cast<uint8_t>(et::TERMINAL_INFO)) {
-        et::TerminalInfo info;
+      } else if (packet.header() == static_cast<uint8_t>(ut::TERMINAL_INFO)) {
+        ut::TerminalInfo info;
         if (!info.ParseFromString(packet.payload())) {
           continue;
         }
@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
       if (read_bytes == 0) {
         break;
       }
-      et::TerminalBuffer tb;
+      ut::TerminalBuffer tb;
       tb.set_buffer(std::string(buffer.data(), buffer.data() + read_bytes));
       if (DebugHandshake() && !jump_mode) {
         std::cerr << "[handshake] term output bytes=" << read_bytes << "\n";
@@ -266,7 +266,7 @@ int main(int argc, char** argv) {
       if (!tb.SerializeToString(&payload)) {
         continue;
       }
-      ut::Packet packet(static_cast<uint8_t>(et::TERMINAL_BUFFER), payload);
+      ut::Packet packet(static_cast<uint8_t>(ut::TERMINAL_BUFFER), payload);
       pipe_handler.WritePacket(pipe, packet);
     }
   });

@@ -5,7 +5,7 @@
 #include <string>
 
 #include "Verbose.hpp"
-#include "et/SocketTypes.hpp"
+#include "protocol/SocketTypes.hpp"
 
 #ifdef UNDYING_TERMINAL_REQUIRE_DEPS
 #include <sodium.h>

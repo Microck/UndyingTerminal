@@ -6,8 +6,8 @@
 #include <string>
 #include <thread>
 
-#include "et/SocketTypes.hpp"
-#include "et/TcpSocketHandler.hpp"
+#include "protocol/SocketTypes.hpp"
+#include "protocol/TcpSocketHandler.hpp"
 
 class TcpListener {
 public:

@@ -14,6 +14,7 @@ class PipeSocketHandler : public SocketHandler {
   int Read(SocketHandle socket, void* buf, size_t count) override;
   int Write(SocketHandle socket, const void* buf, size_t count) override;
   void Close(SocketHandle socket) override;
+  bool IsConnected(SocketHandle socket);
 
   SocketHandle Connect(const std::wstring& pipe_name);
 };
