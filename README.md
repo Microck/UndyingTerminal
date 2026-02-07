@@ -17,15 +17,15 @@
   <br />
 </div>
 
+<img width="1203" height="401" alt="ogimage3" src="https://github.com/user-attachments/assets/9c42bfcb-fe53-4e37-bbf9-afd57f094b5f" />
+
+
+
 ## quick links
 
 - docs: https://undyingterminal.mintlify.app/
 - releases: https://github.com/Microck/UndyingTerminal/releases
 - issues: https://github.com/Microck/UndyingTerminal/issues
-- changelog: CHANGELOG.md
-- contributing: CONTRIBUTING.md
-- security: SECURITY.md
-- code of conduct: CODE_OF_CONDUCT.md
 
 ## what
 
