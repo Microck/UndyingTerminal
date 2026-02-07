@@ -85,6 +85,53 @@ SSH login username (used with `--ssh`).
 --ssh remote-server.com -l admin
 ```
 
+### SSH Config Options
+
+#### `--ssh-config <PATH>`
+
+Specify a custom SSH config file path instead of the default (`~/.ssh/config`).
+
+**Example**:
+```powershell
+--ssh myserver --ssh-config C:\custom\ssh_config
+```
+
+**Behavior**:
+- Loads SSH config directives for the specified host
+- Supports: `HostName`, `User`, `Port`, `IdentityFile`, `ProxyJump`, `LocalForward`, `ForwardAgent`
+
+#### `--no-ssh-config`
+
+Disable SSH config file parsing entirely.
+
+**Example**:
+```powershell
+--ssh user@192.168.1.100 --no-ssh-config
+```
+
+**Use case**: When you want to ignore SSH config settings and use only CLI arguments.
+
+#### `-A, --ssh-agent`
+
+Enable SSH agent forwarding (passes local SSH keys to remote session).
+
+**Example**:
+```powershell
+--ssh myserver -A
+--ssh myserver --ssh-agent
+```
+
+**Security note**: Only enable agent forwarding to trusted hosts.
+
+#### `--no-ssh-agent`
+
+Explicitly disable SSH agent forwarding (overrides `ForwardAgent` in SSH config).
+
+**Example**:
+```powershell
+--ssh myserver --no-ssh-agent
+```
+
 #### `--jumphost <HOST>, --jport <PORT>`
 
 Connect through intermediate jump server.
@@ -268,6 +315,25 @@ Send environment variable to remote session.
 ```powershell With Port
 # SSH on non-standard port (use standard SSH syntax)
 ./undying-terminal.exe --ssh user@remote-server.com:2222
+```
+
+```powershell With SSH Config
+# Uses host alias from ~/.ssh/config
+./undying-terminal.exe --ssh myserver
+
+# Custom SSH config file
+./undying-terminal.exe --ssh myserver --ssh-config C:\custom\ssh_config
+
+# Disable SSH config parsing
+./undying-terminal.exe --ssh user@192.168.1.100 --no-ssh-config
+```
+
+```powershell With Agent Forwarding
+# Enable SSH agent forwarding
+./undying-terminal.exe --ssh myserver -A
+
+# Disable agent forwarding (overrides config)
+./undying-terminal.exe --ssh myserver --no-ssh-agent
 ```
 </CodeGroup>
 

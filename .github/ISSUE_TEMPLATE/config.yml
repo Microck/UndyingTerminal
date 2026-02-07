@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://undyingterminal.mintlify.app/
+    about: Read the docs, guides, and troubleshooting steps
