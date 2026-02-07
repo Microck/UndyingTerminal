@@ -48,24 +48,15 @@ Unlike traditional SSH, it implements:
 - Optional encryption (XSalsa20)
 
 **Known Limitations**:
--  Windows-only (Linux/macOS planned)
-
-See [Roadmap](#roadmap) for planned features.
+-  Windows-only
 
 ### Can I use this on Linux or macOS?
 
-**Not yet**. Currently Windows-only due to ConPTY dependency.
+No. Undying Terminal binaries are Windows executables.
 
-**Planned**:
-- Linux: Server + terminal components (TBD)
-- macOS: Server + terminal components (TBD)
-
-**Current Workaround**:
-- Run server on Windows
-- Connect from Linux/macOS using SSH bootstrap:
-  ```bash
-  ssh user@windows-server "cd /path && ./undying-terminal-terminal.exe"
-  ```
+If you need to use it from a non-Windows machine, the practical options are:
+- Use RDP/Remote Desktop into a Windows machine and run the client there
+- Run a Windows VM and run the client there
 
 ### What does "undying" mean?
 
@@ -485,7 +476,7 @@ constexpr auto kKeepaliveInterval = std::chrono::seconds(5);
 // Change to desired interval
 ```
 
-**Future**: Config file option planned.
+There is no config file option for this currently.
 
 ### How does the recovery buffer work?
 
@@ -504,34 +495,12 @@ Each connection maintains:
 
 ### Can I run the client on Linux?
 
-**Via SSH bootstrap**: Yes
-
-```bash
-# Linux client connecting to Windows server
-ssh user@windows-server "cd /path && ./undying-terminal-terminal.exe"
-```
-
-**Native Linux client**: Not yet (planned)
+No. The client is Windows-only.
 
 ## Roadmap
 
-### What's planned for future releases?
-
-**v1.0.1 (Released)**:
-- SSH config parsing (`~/.ssh/config` support)
-- SSH agent forwarding (`-A`/`--ssh-agent`)
-- Server cleanup on pipe disconnect
-- ProxyJump and LocalForward from config
-
-**v1.2 (Planned)**:
-- Linux server + terminal support
-- Compression (optional)
-- Configurable keepalive interval
-
-**v2.0 (Planned)**:
-- macOS support
-- AEAD encryption (authenticated)
-- Multi-server clustering
+There is no published roadmap. If you want to propose changes or new features, please open an issue:
+https://github.com/Microck/UndyingTerminal/issues
 
 **Community requests**: [GitHub Issues](https://github.com/Microck/UndyingTerminal/issues)
 
@@ -550,7 +519,7 @@ See [Contributing Guide](/development/contributing).
 
 ### Where can I get support?
 
-**Documentation**: https://undyingterminal.dev  
+**Documentation**: https://undyingterminal.mintlify.app/  
 **GitHub Issues**: https://github.com/Microck/UndyingTerminal/issues  
 
 **Before asking**:

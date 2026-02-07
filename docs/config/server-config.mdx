@@ -131,7 +131,7 @@ $hexKey = -join ($bytes | ForEach-Object { $_.ToString("x2") })
 Write-Output "shared_key_hex=$hexKey"
 ```
 
-```bash Linux/MSYS2
+```bash OpenSSL (MSYS2/Git Bash)
 # Generate random 32-byte hex key
 openssl rand -hex 32
 ```
