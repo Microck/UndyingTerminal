@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: windows-latest
@@ -59,6 +62,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64.zip
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
