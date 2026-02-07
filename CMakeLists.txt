@@ -71,6 +71,7 @@ add_executable(undying_terminal
   src/ut/MockServer.cpp
   src/ut/PseudoTerminalConsole.cpp
   src/ut/ReconnectionManager.cpp
+  src/ut/SshConfig.cpp
   src/ut/et/BackedReader.cpp
   src/ut/et/BackedWriter.cpp
   src/ut/et/ClientConnection.cpp
@@ -269,6 +270,13 @@ if(UNDYING_TERMINAL_BUILD_TESTS)
   )
   target_include_directories(ssh_command_builder_test PRIVATE src/ut)
   add_test(NAME ssh_command_builder_test COMMAND ssh_command_builder_test)
+
+  add_executable(ssh_config_test
+    tests/ssh_config_test.cpp
+    src/ut/SshConfig.cpp
+  )
+  target_include_directories(ssh_config_test PRIVATE src/ut)
+  add_test(NAME ssh_config_test COMMAND ssh_config_test)
 
   add_executable(windows_paths_test
     tests/windows_paths_test.cpp

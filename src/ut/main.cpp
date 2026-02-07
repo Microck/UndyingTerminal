@@ -9,6 +9,7 @@
 
 #include "ClientId.hpp"
 #include "PseudoTerminalConsole.hpp"
+#include "SshConfig.hpp"
 #include "SshCommandBuilder.hpp"
 #include "SshSubprocess.hpp"
 #include "WinsockContext.hpp"
@@ -111,8 +112,11 @@ int main(int argc, char** argv) {
     std::string host = argv[2];
     std::string user;
     int ssh_port = 22;
+    bool ssh_port_set = false;
+    bool user_set = false;
     int server_port = 2022;
     std::string identity;
+    bool identity_set = false;
     std::string remote_terminal = "undying-terminal-terminal.exe";
     std::string tunnel_arg;
     std::string reverse_tunnel_arg;
@@ -120,29 +124,56 @@ int main(int argc, char** argv) {
     int jport_arg = 2022;
     std::string command_arg;
     bool noexit = false;
+    bool ssh_config_enabled = true;
+    std::string ssh_config_path;
+    bool ssh_agent_enabled = false;
+    bool ssh_agent_set = false;
+    std::string ssh_proxy_jump;
+    std::vector<std::string> config_local_forwards;
  
      for (int i = 3; i < argc; ++i) {
        std::string arg = argv[i];
-       if (arg == "-l" && i + 1 < argc) {
-         user = argv[++i];
-         continue;
-       }
-       if (arg == "-p" && i + 1 < argc) {
-         ssh_port = std::stoi(argv[++i]);
-         continue;
-       }
+        if (arg == "-l" && i + 1 < argc) {
+          user = argv[++i];
+          user_set = true;
+          continue;
+        }
+        if (arg == "-p" && i + 1 < argc) {
+          ssh_port = std::stoi(argv[++i]);
+          ssh_port_set = true;
+          continue;
+        }
        if (arg == "--server-port" && i + 1 < argc) {
          server_port = std::stoi(argv[++i]);
          continue;
        }
-       if (arg == "-i" && i + 1 < argc) {
-         identity = argv[++i];
-         continue;
-       }
-       if (arg == "--remote-terminal" && i + 1 < argc) {
-         remote_terminal = argv[++i];
-         continue;
-       }
+        if (arg == "-i" && i + 1 < argc) {
+          identity = argv[++i];
+          identity_set = true;
+          continue;
+        }
+        if (arg == "--remote-terminal" && i + 1 < argc) {
+          remote_terminal = argv[++i];
+          continue;
+        }
+        if (arg == "--ssh-config" && i + 1 < argc) {
+          ssh_config_path = argv[++i];
+          continue;
+        }
+        if (arg == "--no-ssh-config") {
+          ssh_config_enabled = false;
+          continue;
+        }
+        if (arg == "--ssh-agent" || arg == "-A") {
+          ssh_agent_enabled = true;
+          ssh_agent_set = true;
+          continue;
+        }
+        if (arg == "--no-ssh-agent") {
+          ssh_agent_enabled = false;
+          ssh_agent_set = true;
+          continue;
+        }
       if ((arg == "--jumphost" || arg == "-jumphost") && i + 1 < argc) {
         jumphost_arg = argv[++i];
         continue;
@@ -169,6 +200,39 @@ int main(int argc, char** argv) {
       }
      }
 
+    if (ssh_config_enabled) {
+      const std::string config_path = ssh_config_path.empty()
+                                          ? SshConfig::DefaultConfigPath()
+                                          : ssh_config_path;
+      const bool optional = ssh_config_path.empty();
+      SshConfigOptions config;
+      std::string config_error;
+      if (!SshConfig::LoadForHost(host, config_path, optional, &config, &config_error)) {
+        std::cerr << "SSH config error: " << config_error << "\n";
+        return 1;
+      }
+      if (!config.host_name.empty()) {
+        host = config.host_name;
+      }
+      if (!user_set && !config.user.empty()) {
+        user = config.user;
+      }
+      if (!ssh_port_set && config.port > 0) {
+        ssh_port = config.port;
+      }
+      if (!identity_set && !config.identity_file.empty()) {
+        identity = config.identity_file;
+      }
+      if (!config.proxy_jump.empty()) {
+        ssh_proxy_jump = config.proxy_jump;
+      }
+      if (config.forward_agent_set && !ssh_agent_set) {
+        ssh_agent_enabled = config.forward_agent;
+        ssh_agent_set = true;
+      }
+      config_local_forwards = config.local_forwards;
+    }
+
     const std::string seed_id = "XXX" + GenerateRandom(13);
     const std::string seed_key = GenerateRandom(32);
     const char* term_env = std::getenv("TERM");
@@ -180,6 +244,12 @@ int main(int argc, char** argv) {
     builder.SetHost(host).SetUser(user).SetPort(ssh_port).SetRemoteCommand(remote_cmd);
     if (!identity.empty()) {
       builder.SetIdentityFile(identity);
+    }
+    if (!ssh_proxy_jump.empty()) {
+      builder.AddOption("-J " + ssh_proxy_jump);
+    }
+    if (ssh_agent_enabled) {
+      builder.AddOption("-A");
     }
     if (!jumphost_arg.empty()) {
       builder.AddOption("-J " + jumphost_arg);
@@ -215,6 +285,9 @@ int main(int argc, char** argv) {
       if (!identity.empty()) {
         jump_builder.SetIdentityFile(identity);
       }
+      if (ssh_agent_enabled) {
+        jump_builder.AddOption("-A");
+      }
       if (!jump_ssh.Start(jump_builder.Build())) {
         std::cerr << "Failed to start jumphost terminal\n";
         return 1;
@@ -232,6 +305,24 @@ int main(int argc, char** argv) {
     }
 
     const bool interactive = command_arg.empty() || noexit;
+
+    std::vector<et::PortForwardSourceRequest> forward_requests;
+    auto append_forward_requests = [&](const std::string& arg) {
+      for (const auto& req : ut::ParseRangesToRequests(arg)) {
+        forward_requests.push_back(req);
+      }
+    };
+    try {
+      for (const auto& forward_arg : config_local_forwards) {
+        append_forward_requests(forward_arg);
+      }
+      if (!tunnel_arg.empty()) {
+        append_forward_requests(tunnel_arg);
+      }
+    } catch (const std::exception& ex) {
+      std::cerr << "Tunnel parse failed: " << ex.what() << "\n";
+      return 1;
+    }
  
     auto socket_handler = std::make_shared<ut::TcpSocketHandler>();
     ut::ClientConnection connection(socket_handler, endpoint, client_id, passkey);
@@ -324,10 +415,10 @@ int main(int argc, char** argv) {
     }
 
     std::shared_ptr<ut::PortForwardHandler> forward_handler;
-    if (!tunnel_arg.empty()) {
+    if (!forward_requests.empty()) {
       forward_handler = std::make_shared<ut::PortForwardHandler>(socket_handler, false);
       try {
-        for (const auto& req : ut::ParseRangesToRequests(tunnel_arg)) {
+        for (const auto& req : forward_requests) {
           forward_handler->AddForwardRequest(req);
         }
       } catch (const std::exception& ex) {
@@ -662,11 +753,18 @@ int main(int argc, char** argv) {
       }
     });
 
-    std::shared_ptr<ut::PortForwardHandler> forward_handler;
+    std::vector<et::PortForwardSourceRequest> forward_requests;
     if (!tunnel_arg.empty()) {
+      for (const auto& req : ut::ParseRangesToRequests(tunnel_arg)) {
+        forward_requests.push_back(req);
+      }
+    }
+
+    std::shared_ptr<ut::PortForwardHandler> forward_handler;
+    if (!forward_requests.empty()) {
       forward_handler = std::make_shared<ut::PortForwardHandler>(socket_handler, false);
       try {
-        for (const auto& req : ut::ParseRangesToRequests(tunnel_arg)) {
+        for (const auto& req : forward_requests) {
           forward_handler->AddForwardRequest(req);
         }
       } catch (const std::exception& ex) {
