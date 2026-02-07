@@ -224,6 +224,12 @@ void TcpListener::HandleClient(ut::SocketHandle client) {
   }
 
   while (running_) {
+    if (!pipe_handler.IsConnected(pipe)) {
+      if (DebugHandshake()) {
+        std::cerr << "[handshake] term pipe disconnected\n";
+      }
+      break;
+    }
     bool did_work = false;
     if (connection->reader() && connection->reader()->HasData()) {
       ut::Packet packet;
@@ -287,6 +293,7 @@ void TcpListener::HandleClient(ut::SocketHandle client) {
           if (DebugHandshake()) {
             std::cerr << "[handshake] term pipe_to_client read_failed\n";
           }
+          break;
         }
       } catch (...) {
         break;
@@ -300,5 +307,8 @@ void TcpListener::HandleClient(ut::SocketHandle client) {
     }
   }
 
+  pipe_handler.Close(pipe);
+  registry_->UnregisterTerminal(client_id);
   registry_->MarkActive(client_id, false);
+  connection->CloseSocket();
 }
