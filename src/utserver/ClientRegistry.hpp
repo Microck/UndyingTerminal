@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "et/SocketTypes.hpp"
+#include "protocol/SocketTypes.hpp"
 
 namespace ut {
 class ServerClientConnection;

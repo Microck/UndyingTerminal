@@ -10,8 +10,8 @@
 #include <thread>
 
 #include "ClientRegistry.hpp"
-#include "et/PipeSocketHandler.hpp"
-#include "ETerminal.pb.h"
+#include "protocol/PipeSocketHandler.hpp"
+#include "UTerminal.pb.h"
 #include "Verbose.hpp"
 
 namespace {
@@ -126,11 +126,11 @@ void NamedPipeServer::HandleClient(void* pipe_handle) {
     CloseHandle(pipe);
     return;
   }
-  if (packet.header() != static_cast<uint8_t>(et::TERMINAL_USER_INFO)) {
+  if (packet.header() != static_cast<uint8_t>(ut::TERMINAL_USER_INFO)) {
     CloseHandle(pipe);
     return;
   }
-  et::TerminalUserInfo info;
+  ut::TerminalUserInfo info;
   if (!info.ParseFromString(packet.payload())) {
     CloseHandle(pipe);
     return;

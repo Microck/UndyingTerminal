@@ -14,14 +14,14 @@
 #include "SshSubprocess.hpp"
 #include "WinsockContext.hpp"
 
-#include "et/ClientConnection.hpp"
-#include "et/Packet.hpp"
-#include "et/PortForwardHandler.hpp"
-#include "et/TcpSocketHandler.hpp"
-#include "et/TunnelUtils.hpp"
-#include "EtConstants.hpp"
-#include "ET.pb.h"
-#include "ETerminal.pb.h"
+#include "protocol/ClientConnection.hpp"
+#include "protocol/Packet.hpp"
+#include "protocol/PortForwardHandler.hpp"
+#include "protocol/TcpSocketHandler.hpp"
+#include "protocol/TunnelUtils.hpp"
+#include "UtConstants.hpp"
+#include "UT.pb.h"
+#include "UTerminal.pb.h"
 
 namespace {
 bool DebugHandshake() {
@@ -76,7 +76,7 @@ COORD GetConsoleSize() {
 }
 
 bool SendTerminalInfo(ut::ClientConnection& connection, const std::string& client_id, short cols, short rows) {
-  et::TerminalInfo info;
+  ut::TerminalInfo info;
   info.set_id(client_id);
   info.set_width(cols);
   info.set_height(rows);
@@ -84,7 +84,7 @@ bool SendTerminalInfo(ut::ClientConnection& connection, const std::string& clien
   if (!info.SerializeToString(&payload)) {
     return false;
   }
-  ut::Packet packet(static_cast<uint8_t>(et::TERMINAL_INFO), payload);
+  ut::Packet packet(static_cast<uint8_t>(ut::TERMINAL_INFO), payload);
   connection.WritePacket(packet);
   return true;
 }
@@ -295,7 +295,7 @@ int main(int argc, char** argv) {
       jump_active = true;
     }
 
-    et::SocketEndpoint endpoint;
+    ut::SocketEndpoint endpoint;
     if (!jumphost_arg.empty()) {
       endpoint.set_name(jumphost_arg);
       endpoint.set_port(jport_arg);
@@ -306,7 +306,7 @@ int main(int argc, char** argv) {
 
     const bool interactive = command_arg.empty() || noexit;
 
-    std::vector<et::PortForwardSourceRequest> forward_requests;
+    std::vector<ut::PortForwardSourceRequest> forward_requests;
     auto append_forward_requests = [&](const std::string& arg) {
       for (const auto& req : ut::ParseRangesToRequests(arg)) {
         forward_requests.push_back(req);
@@ -334,7 +334,7 @@ int main(int argc, char** argv) {
 
     const bool returning_client = connection.IsReturningClient();
     if (!returning_client) {
-      et::InitialPayload payload;
+      ut::InitialPayload payload;
       if (!jumphost_arg.empty()) {
         payload.set_jumphost(true);
         (*payload.mutable_environmentvariables())["dsthost"] = host;
@@ -354,33 +354,33 @@ int main(int argc, char** argv) {
       }
       std::string payload_bytes;
       payload.SerializeToString(&payload_bytes);
-      connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::INITIAL_PAYLOAD), payload_bytes));
+      connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::INITIAL_PAYLOAD), payload_bytes));
 
       ut::Packet response_packet;
-      if (!connection.ReadPacket(&response_packet) || response_packet.header() != static_cast<uint8_t>(et::INITIAL_RESPONSE)) {
+      if (!connection.ReadPacket(&response_packet) || response_packet.header() != static_cast<uint8_t>(ut::INITIAL_RESPONSE)) {
         std::cerr << "Missing initial response\n";
         return 1;
       }
-      et::InitialResponse response;
+      ut::InitialResponse response;
       if (!response.ParseFromString(response_packet.payload()) || !response.error().empty()) {
         std::cerr << "Initial response error: " << response.error() << "\n";
         return 1;
       }
 
       if (!command_arg.empty()) {
-        et::TerminalBuffer tb;
+        ut::TerminalBuffer tb;
         tb.set_buffer(command_arg);
         std::string tb_bytes;
         if (tb.SerializeToString(&tb_bytes)) {
-          connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::TERMINAL_BUFFER), tb_bytes));
+          connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::TERMINAL_BUFFER), tb_bytes));
         }
       }
       if (!noexit && !command_arg.empty()) {
-        et::TerminalBuffer tb;
+        ut::TerminalBuffer tb;
         tb.set_buffer("exit\r\n");
         std::string tb_bytes;
         if (tb.SerializeToString(&tb_bytes)) {
-          connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::TERMINAL_BUFFER), tb_bytes));
+          connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::TERMINAL_BUFFER), tb_bytes));
         }
       }
     }
@@ -404,7 +404,7 @@ int main(int argc, char** argv) {
           if (!running) {
             break;
           }
-          connection.Write(ut::Packet(static_cast<uint8_t>(et::KEEP_ALIVE), ""));
+          connection.Write(ut::Packet(static_cast<uint8_t>(ut::KEEP_ALIVE), ""));
           const int64_t age = NowMs() - last_rx_ms.load();
           if (age > kKeepaliveDeadMs) {
             connection.CloseSocketAndMaybeReconnect();
@@ -442,13 +442,13 @@ int main(int argc, char** argv) {
           if (read_bytes == 0) {
             break;
           }
-          et::TerminalBuffer tb;
+          ut::TerminalBuffer tb;
           tb.set_buffer(std::string(buffer.data(), buffer.data() + read_bytes));
           std::string tb_bytes;
           if (!tb.SerializeToString(&tb_bytes)) {
             continue;
           }
-          connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::TERMINAL_BUFFER), tb_bytes));
+          connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::TERMINAL_BUFFER), tb_bytes));
         }
         running = false;
       });
@@ -481,13 +481,13 @@ int main(int argc, char** argv) {
             Sleep(5);
             continue;
           }
-          if (packet.header() == static_cast<uint8_t>(et::KEEP_ALIVE)) {
+          if (packet.header() == static_cast<uint8_t>(ut::KEEP_ALIVE)) {
             continue;
           }
-          if (packet.header() != static_cast<uint8_t>(et::TERMINAL_BUFFER)) {
+          if (packet.header() != static_cast<uint8_t>(ut::TERMINAL_BUFFER)) {
             continue;
           }
-          et::TerminalBuffer tb;
+          ut::TerminalBuffer tb;
           if (!tb.ParseFromString(packet.payload())) {
             continue;
           }
@@ -520,11 +520,11 @@ int main(int argc, char** argv) {
                     << static_cast<int>(packet.header())
                     << " bytes=" << packet.payload().size() << "\n" << std::flush;
         }
-        if (packet.header() == static_cast<uint8_t>(et::KEEP_ALIVE)) {
+        if (packet.header() == static_cast<uint8_t>(ut::KEEP_ALIVE)) {
           continue;
         }
-        if (packet.header() == static_cast<uint8_t>(et::TERMINAL_BUFFER)) {
-          et::TerminalBuffer tb;
+        if (packet.header() == static_cast<uint8_t>(ut::TERMINAL_BUFFER)) {
+          ut::TerminalBuffer tb;
           if (!tb.ParseFromString(packet.payload())) {
             continue;
           }
@@ -533,12 +533,12 @@ int main(int argc, char** argv) {
           if (DebugHandshake()) {
             std::cerr << "[handshake] client_from_server write bytes=" << written << "\n" << std::flush;
           }
-        } else if (packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DESTINATION_REQUEST)) {
+        } else if (packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DESTINATION_REQUEST)) {
           if (reverse_handler) {
             reverse_handler->HandlePacket(packet, send_packet);
           }
-        } else if (packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DESTINATION_RESPONSE) ||
-                   packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DATA)) {
+        } else if (packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DESTINATION_RESPONSE) ||
+                   packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DATA)) {
           if (forward_handler) {
             forward_handler->HandlePacket(packet, send_packet);
           }
@@ -655,7 +655,7 @@ int main(int argc, char** argv) {
     WinsockContext winsock;
     (void)winsock;
 
-    et::SocketEndpoint endpoint;
+    ut::SocketEndpoint endpoint;
     if (!jumphost_arg.empty()) {
       endpoint.set_name(jumphost_arg);
       endpoint.set_port(jport_arg);
@@ -676,7 +676,7 @@ int main(int argc, char** argv) {
 
     const bool returning_client = connection.IsReturningClient();
     if (!returning_client) {
-      et::InitialPayload payload;
+      ut::InitialPayload payload;
       if (!jumphost_arg.empty()) {
         payload.set_jumphost(true);
         (*payload.mutable_environmentvariables())["dsthost"] = host;
@@ -696,33 +696,33 @@ int main(int argc, char** argv) {
       }
       std::string payload_bytes;
       payload.SerializeToString(&payload_bytes);
-      connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::INITIAL_PAYLOAD), payload_bytes));
+      connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::INITIAL_PAYLOAD), payload_bytes));
 
       ut::Packet response_packet;
-      if (!connection.ReadPacket(&response_packet) || response_packet.header() != static_cast<uint8_t>(et::INITIAL_RESPONSE)) {
+      if (!connection.ReadPacket(&response_packet) || response_packet.header() != static_cast<uint8_t>(ut::INITIAL_RESPONSE)) {
         std::cerr << "Missing initial response\n";
         return 1;
       }
-      et::InitialResponse response;
+      ut::InitialResponse response;
       if (!response.ParseFromString(response_packet.payload()) || !response.error().empty()) {
         std::cerr << "Initial response error: " << response.error() << "\n";
         return 1;
       }
 
       if (!command_arg.empty()) {
-        et::TerminalBuffer tb;
+        ut::TerminalBuffer tb;
         tb.set_buffer(command_arg);
         std::string tb_bytes;
         if (tb.SerializeToString(&tb_bytes)) {
-          connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::TERMINAL_BUFFER), tb_bytes));
+          connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::TERMINAL_BUFFER), tb_bytes));
         }
       }
       if (!noexit) {
-        et::TerminalBuffer tb;
+        ut::TerminalBuffer tb;
         tb.set_buffer("; exit\n");
         std::string tb_bytes;
         if (tb.SerializeToString(&tb_bytes)) {
-          connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::TERMINAL_BUFFER), tb_bytes));
+          connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::TERMINAL_BUFFER), tb_bytes));
         }
       }
     }
@@ -744,7 +744,7 @@ int main(int argc, char** argv) {
         if (!running) {
           break;
         }
-        connection.Write(ut::Packet(static_cast<uint8_t>(et::KEEP_ALIVE), ""));
+        connection.Write(ut::Packet(static_cast<uint8_t>(ut::KEEP_ALIVE), ""));
         const int64_t age = NowMs() - last_rx_ms.load();
         if (age > kKeepaliveDeadMs) {
           connection.CloseSocketAndMaybeReconnect();
@@ -753,7 +753,7 @@ int main(int argc, char** argv) {
       }
     });
 
-    std::vector<et::PortForwardSourceRequest> forward_requests;
+    std::vector<ut::PortForwardSourceRequest> forward_requests;
     if (!tunnel_arg.empty()) {
       for (const auto& req : ut::ParseRangesToRequests(tunnel_arg)) {
         forward_requests.push_back(req);
@@ -787,13 +787,13 @@ int main(int argc, char** argv) {
           if (read_bytes == 0) {
             break;
           }
-          et::TerminalBuffer tb;
+          ut::TerminalBuffer tb;
           tb.set_buffer(std::string(buffer.data(), buffer.data() + read_bytes));
           std::string tb_bytes;
           if (!tb.SerializeToString(&tb_bytes)) {
             continue;
           }
-          connection.WritePacket(ut::Packet(static_cast<uint8_t>(et::TERMINAL_BUFFER), tb_bytes));
+          connection.WritePacket(ut::Packet(static_cast<uint8_t>(ut::TERMINAL_BUFFER), tb_bytes));
         }
         running = false;
       });
@@ -826,13 +826,13 @@ int main(int argc, char** argv) {
             Sleep(5);
             continue;
           }
-          if (packet.header() == static_cast<uint8_t>(et::KEEP_ALIVE)) {
+          if (packet.header() == static_cast<uint8_t>(ut::KEEP_ALIVE)) {
             continue;
           }
-          if (packet.header() != static_cast<uint8_t>(et::TERMINAL_BUFFER)) {
+          if (packet.header() != static_cast<uint8_t>(ut::TERMINAL_BUFFER)) {
             continue;
           }
-          et::TerminalBuffer tb;
+          ut::TerminalBuffer tb;
           if (!tb.ParseFromString(packet.payload())) {
             continue;
           }
@@ -865,11 +865,11 @@ int main(int argc, char** argv) {
                     << static_cast<int>(packet.header())
                     << " bytes=" << packet.payload().size() << "\n" << std::flush;
         }
-        if (packet.header() == static_cast<uint8_t>(et::KEEP_ALIVE)) {
+        if (packet.header() == static_cast<uint8_t>(ut::KEEP_ALIVE)) {
           continue;
         }
-        if (packet.header() == static_cast<uint8_t>(et::TERMINAL_BUFFER)) {
-          et::TerminalBuffer tb;
+        if (packet.header() == static_cast<uint8_t>(ut::TERMINAL_BUFFER)) {
+          ut::TerminalBuffer tb;
           if (!tb.ParseFromString(packet.payload())) {
             continue;
           }
@@ -878,12 +878,12 @@ int main(int argc, char** argv) {
           if (DebugHandshake()) {
             std::cerr << "[handshake] client_from_server write bytes=" << written << "\n" << std::flush;
           }
-        } else if (packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DESTINATION_REQUEST)) {
+        } else if (packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DESTINATION_REQUEST)) {
           if (reverse_handler) {
             reverse_handler->HandlePacket(packet, send_packet);
           }
-        } else if (packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DESTINATION_RESPONSE) ||
-                   packet.header() == static_cast<uint8_t>(et::PORT_FORWARD_DATA)) {
+        } else if (packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DESTINATION_RESPONSE) ||
+                   packet.header() == static_cast<uint8_t>(ut::PORT_FORWARD_DATA)) {
           if (forward_handler) {
             forward_handler->HandlePacket(packet, send_packet);
           }
