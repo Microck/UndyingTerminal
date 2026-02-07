@@ -34,8 +34,7 @@ Unlike traditional SSH, it implements:
 **Use SSH when**:
 - Network is stable
 - Quick one-off commands
-- Need SSH agent forwarding (not yet supported)
-- Need SSH config file support (not yet supported)
+- Need features not yet supported by Undying Terminal
 
 ### Is this production-ready?
 
@@ -50,9 +49,6 @@ Unlike traditional SSH, it implements:
 
 **Known Limitations**:
 -  Windows-only (Linux/macOS planned)
--  No SSH config parsing
--  No SSH agent forwarding
--  Server doesn't clean up on pipe disconnect
 
 See [Roadmap](#roadmap) for planned features.
 
@@ -521,15 +517,16 @@ ssh user@windows-server "cd /path && ./undying-terminal-terminal.exe"
 
 ### What's planned for future releases?
 
-**v1.1 (Q1 2024)**:
-- SSH config parsing (ProxyJump, LocalForward)
+**v1.0.1 (Released)**:
+- SSH config parsing (`~/.ssh/config` support)
+- SSH agent forwarding (`-A`/`--ssh-agent`)
 - Server cleanup on pipe disconnect
-- Configurable keepalive interval
+- ProxyJump and LocalForward from config
 
 **v1.2 (Q2 2024)**:
 - Linux server + terminal support
-- SSH agent forwarding
 - Compression (optional)
+- Configurable keepalive interval
 
 **v2.0 (Q3 2024)**:
 - macOS support

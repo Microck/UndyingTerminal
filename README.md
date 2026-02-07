@@ -22,6 +22,10 @@
 - docs: https://undyingterminal.mintlify.app/
 - releases: https://github.com/Microck/UndyingTerminal/releases
 - issues: https://github.com/Microck/UndyingTerminal/issues
+- changelog: CHANGELOG.md
+- contributing: CONTRIBUTING.md
+- security: SECURITY.md
+- code of conduct: CODE_OF_CONDUCT.md
 
 ## what
 
@@ -191,11 +195,16 @@ $env:UT_DEBUG_HANDSHAKE=1
 ./undying-terminal.exe --connect ...
 ```
 
-## limitations (still missing)
+## recent additions (v1.0.1)
 
-- ssh config parsing (proxyjump/localforward)
-- ssh-agent forwarding
+- ssh config parsing (`~/.ssh/config`) with support for:
+  - `HostName`, `User`, `Port`, `IdentityFile`
+  - `ProxyJump` for jump host connections
+  - `LocalForward` for port forwarding from config
+  - `ForwardAgent` for ssh-agent forwarding
 - server cleanup on pipe disconnect
+- `--ssh-config`, `--no-ssh-config` CLI options
+- `-A`/`--ssh-agent`, `--no-ssh-agent` CLI options
 
 track work in issues: https://github.com/Microck/UndyingTerminal/issues
 

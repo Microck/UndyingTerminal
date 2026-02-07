@@ -562,3 +562,83 @@ Manual bootstrap over Remote Desktop:
 - Set up [Jumphost](/guides/jumphost) access for complex networks
 - Install as [Windows Service](/guides/windows-service) for automatic startup
 - Review [Server Configuration](/config/server-config) options
+
+## SSH Config File Support
+
+Undying Terminal automatically reads your SSH config file (`~/.ssh/config` on Windows: `%USERPROFILE%\.ssh\config`) when using SSH bootstrap mode.
+
+### Supported Directives
+
+| Directive | Description |
+|-----------|-------------|
+| `HostName` | Real hostname/IP to connect to (resolves aliases) |
+| `User` | Default SSH username |
+| `Port` | Custom SSH port |
+| `IdentityFile` | Path to SSH private key |
+| `ProxyJump` | Jump through intermediate hosts |
+| `LocalForward` | Port forwarding (applied to Undying Terminal tunnels) |
+| `ForwardAgent` | Enable SSH agent forwarding |
+
+### Example SSH Config
+
+```
+# ~/.ssh/config
+Host myserver
+    HostName 192.168.1.100
+    User admin
+    Port 2222
+    IdentityFile ~/.ssh/id_myserver
+    LocalForward 5432 localhost:5432
+
+Host prod
+    HostName prod.example.com
+    User deploy
+    ProxyJump jumphost.example.com
+    ForwardAgent yes
+```
+
+### Using SSH Config with Undying Terminal
+
+```powershell
+# Uses settings from ~/.ssh/config for "myserver" host alias
+./undying-terminal.exe --ssh myserver
+
+# Uses ProxyJump from config for "prod" host
+./undying-terminal.exe --ssh prod
+```
+
+### Config Options
+
+#### `--ssh-config <PATH>`
+
+Specify a custom SSH config file path instead of the default.
+
+```powershell
+./undying-terminal.exe --ssh myserver --ssh-config C:\custom\ssh_config
+```
+
+#### `--no-ssh-config`
+
+Disable SSH config file parsing entirely.
+
+```powershell
+./undying-terminal.exe --ssh user@192.168.1.100 --no-ssh-config
+```
+
+### SSH Agent Forwarding
+
+#### `-A, --ssh-agent`
+
+Enable SSH agent forwarding (passes your local SSH keys to the remote session).
+
+```powershell
+./undying-terminal.exe --ssh myserver -A
+```
+
+#### `--no-ssh-agent`
+
+Explicitly disable SSH agent forwarding (overrides config file setting).
+
+```powershell
+./undying-terminal.exe --ssh myserver --no-ssh-agent
+```
