@@ -9,7 +9,6 @@
     "href": "https://undyingterminal.com"
   },
 "favicon": "/favicon.svg",
-  "basePath": "/docs",
   "colors": {
     "primary": "#fc6505",
     "light": "#ff8540",
