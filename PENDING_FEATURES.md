@@ -48,11 +48,34 @@ This document lists features from Eternal Terminal that Undying Terminal does no
 - **Value**: Use ET purely as a tunnel/relay without shell overhead
 - **Status**: Implemented via `--tunnel-only` (keeps port-forwarding active without ConPTY; `-t` remains the tunnel-argument flag)
 
+## Future Considerations
+
+The following features from Eternal Terminal are **not implemented** but could be considered for future releases based on user demand:
+
+### 8. Tmux Control Mode (`tmux -CC`)
+
+- **Eternal Terminal**: Full `tmux -CC` control mode support with bidirectional protocol
+- **Undying Terminal**: Basic tmux wrapping only (`--tmux`, `--tmux-session`)
+- **Value**: GUI-like window management, programmatic control of tmux sessions, native tab integration
+- **Status**: Not Implemented (complexity vs. value trade-off)
+- **Rationale**: 
+  - Requires implementing tmux control mode protocol parser (%begin, %end, %output markers)
+  - Significant effort (~500+ lines, protocol state machine, async I/O)
+  - Limited benefit on Windows (Windows Terminal already has native tabs)
+  - Basic tmux wrapping provides 90% of the value (session persistence)
+  - Would be valuable for users wanting advanced tmux GUI integration
+- **Implementation Notes**:
+  - Protocol: https://github.com/tmux/tmux/wiki/Control-Mode
+  - Requires bidirectional text protocol handling
+  - State machine for tracking windows/panes
+  - UI abstraction layer for window management
+
 ## Notes
 
 - Cross-platform support (Linux/macOS) was intentionally excluded per requirements
 - Windows remains the primary target platform
 - Priority should be based on user workflow impact
+- All originally planned features (1-7) are now implemented as of v1.1.0
 
 ## References
 
