@@ -3,12 +3,13 @@
   "theme": "aspen",
   "name": "Undying Terminal",
   "description": "Windows-native persistent terminal that survives disconnects, sleep/wake, and network changes. Like SSH but bulletproof.",
-  "logo": {
+"logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg",
-    "href": "https://undyingterminal.dev"
+    "href": "https://undyingterminal.com"
   },
-  "favicon": "/favicon.svg",
+"favicon": "/favicon.svg",
+  "basePath": "/docs",
   "colors": {
     "primary": "#fc6505",
     "light": "#ff8540",
@@ -35,8 +36,12 @@
   "seo": {
     "indexing": "all"
   },
-  "navbar": {
+"navbar": {
     "links": [
+      {
+        "label": "Home",
+        "href": "https://undyingterminal.com"
+      },
       {
         "label": "Download",
         "href": "https://github.com/Microck/UndyingTerminal/releases"
@@ -100,13 +105,14 @@
           }
         ]
       },
-      {
+{
         "tab": "Guides",
         "pages": [
           "guides/ssh-bootstrap",
           "guides/jumphost",
           "guides/port-forwarding",
-          "guides/windows-service"
+          "guides/windows-service",
+          "guides/built-in-ui"
         ]
       },
       {
