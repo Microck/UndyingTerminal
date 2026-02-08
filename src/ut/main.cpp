@@ -219,6 +219,7 @@ bool StartUiSessionProcess(const std::string& exe_path,
   if (!out_process) {
     return false;
   }
+  *out_process = PROCESS_INFORMATION{};
 
   std::ostringstream command;
   command << QuoteWindowsArg(exe_path) << " --connect "
@@ -388,16 +389,21 @@ int RunBuiltInUi(const std::string& exe_path) {
       std::string name;
       iss >> name;
       auto it = running.find(name);
-      if (it == running.end()) {
-        std::cout << "profile is not running\n";
-        continue;
-      }
-      TerminateProcess(it->second.hProcess, 0);
-      CloseHandle(it->second.hProcess);
-      running.erase(it);
-      std::cout << "stopped '" << name << "'\n";
+    if (it == running.end()) {
+      std::cout << "profile is not running\n";
       continue;
     }
+    DWORD exit_code = STILL_ACTIVE;
+    if (!GetExitCodeProcess(it->second.hProcess, &exit_code) || exit_code == STILL_ACTIVE) {
+      if (!TerminateProcess(it->second.hProcess, 0)) {
+        std::cout << "stop failed: TerminateProcess error " << GetLastError() << "\n";
+      }
+    }
+    CloseHandle(it->second.hProcess);
+    running.erase(it);
+    std::cout << "stopped '" << name << "'\n";
+    continue;
+  }
 
     if (cmd == "remove") {
       std::string name;
@@ -440,7 +446,10 @@ int RunBuiltInUi(const std::string& exe_path) {
   }
 
   for (auto& entry : running) {
-    TerminateProcess(entry.second.hProcess, 0);
+    DWORD exit_code = STILL_ACTIVE;
+    if (!GetExitCodeProcess(entry.second.hProcess, &exit_code) || exit_code == STILL_ACTIVE) {
+      TerminateProcess(entry.second.hProcess, 0);
+    }
     CloseHandle(entry.second.hProcess);
   }
   return 0;
