@@ -23,7 +23,7 @@
 
 ## quick links
 
-- docs: https://undyingterminal.mintlify.app/
+- docs: https://undyingterminal.com/docs/
 - releases: https://github.com/Microck/UndyingTerminal/releases
 - issues: https://github.com/Microck/UndyingTerminal/issues
 
@@ -43,7 +43,7 @@ undying terminal assumes disconnects will happen and focuses on recovery:
 - the session stays alive on the server.
 - reconnecting replays missed output and keeps your shell state.
 
-if you just want the 5-minute setup, start here: https://undyingterminal.mintlify.app/quickstart
+if you just want the 5-minute setup, start here: https://undyingterminal.com/docs/quickstart
 
 ## how it works
 
@@ -69,7 +69,7 @@ install (once)
 - optional: add that directory to your PATH
 - verify you have `undying-terminal.exe`, `undying-terminal-server.exe`, `undying-terminal-terminal.exe`
 
-full install guide: https://undyingterminal.mintlify.app/installation
+full install guide: https://undyingterminal.com/docs/installation
 
 run
 
@@ -105,7 +105,7 @@ tmux integration (for tmux-capable remote hosts):
 ./undying-terminal.exe --ssh <host> -l <user> --tmux --tmux-session devshell
 ```
 
-more: https://undyingterminal.mintlify.app/guides/ssh-bootstrap
+more: https://undyingterminal.com/docs/guides/ssh-bootstrap
 
 ## build from source
 
@@ -125,7 +125,7 @@ cmake --preset windows-vcpkg-static
 cmake --build --preset windows-vcpkg-static
 ```
 
-full build notes: https://undyingterminal.mintlify.app/installation
+full build notes: https://undyingterminal.com/docs/installation
 
 ## jumphost
 
@@ -157,7 +157,7 @@ sequenceDiagram
 note
 - you only need `UT_PIPE_NAME` when running multiple servers on one machine (dev).
 
-more: https://undyingterminal.mintlify.app/guides/jumphost
+more: https://undyingterminal.com/docs/guides/jumphost
 
 ## tunnels
 
@@ -167,7 +167,7 @@ forward tunnels
 reverse tunnels
 - `-r/--reversetunnel`: server listens; when hit, it requests the client to connect to a destination and shuttles data.
 
-more: https://undyingterminal.mintlify.app/guides/port-forwarding
+more: https://undyingterminal.com/docs/guides/port-forwarding
 
 ## built-in ui and multi-session
 
@@ -210,13 +210,13 @@ env
 - `UT_PIPE_NAME` override named pipe path (dev / multi-server).
 - `UT_DEBUG_HANDSHAKE=1` prints packet-level debug.
 
-more: https://undyingterminal.mintlify.app/config/server-config
+more: https://undyingterminal.com/docs/config/server-config
 
 ## troubleshooting
 
 start with:
-- https://undyingterminal.mintlify.app/troubleshooting/common-issues
-- https://undyingterminal.mintlify.app/troubleshooting/faq
+- https://undyingterminal.com/docs/troubleshooting/common-issues
+- https://undyingterminal.com/docs/troubleshooting/faq
 
 and if you need logs:
 
