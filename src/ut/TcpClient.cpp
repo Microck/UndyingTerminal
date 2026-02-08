@@ -5,6 +5,15 @@
 #include <ws2tcpip.h>
 #include <cerrno>
 
+namespace {
+std::string StripBrackets(const std::string& host) {
+  if (host.size() >= 2 && host.front() == '[' && host.back() == ']') {
+    return host.substr(1, host.size() - 2);
+  }
+  return host;
+}
+}
+
 TcpClient::TcpClient() = default;
 
 TcpClient::~TcpClient() {
@@ -15,24 +24,39 @@ bool TcpClient::Connect(const std::string& host, uint16_t port) {
   Close();
   last_error_ = 0;
 
-  SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  addrinfo hints{};
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+
+  addrinfo* result = nullptr;
+  const std::string host_name = StripBrackets(host);
+  const std::string port_str = std::to_string(port);
+  const int rc = getaddrinfo(host_name.c_str(), port_str.c_str(), &hints, &result);
+  if (rc != 0) {
+    last_error_ = rc;
+    return false;
+  }
+
+  SOCKET sock = INVALID_SOCKET;
+  int last_connect_error = 0;
+  for (addrinfo* ptr = result; ptr != nullptr; ptr = ptr->ai_next) {
+    sock = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+    if (sock == INVALID_SOCKET) {
+      last_connect_error = WSAGetLastError();
+      continue;
+    }
+    if (connect(sock, ptr->ai_addr, static_cast<int>(ptr->ai_addrlen)) == 0) {
+      break;
+    }
+    last_connect_error = WSAGetLastError();
+    closesocket(sock);
+    sock = INVALID_SOCKET;
+  }
+  freeaddrinfo(result);
+
   if (sock == INVALID_SOCKET) {
-    last_error_ = WSAGetLastError();
-    return false;
-  }
-
-  sockaddr_in addr{};
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  if (InetPtonA(AF_INET, host.c_str(), &addr.sin_addr) != 1) {
-    last_error_ = WSAGetLastError();
-    closesocket(sock);
-    return false;
-  }
-
-  if (connect(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == SOCKET_ERROR) {
-    last_error_ = WSAGetLastError();
-    closesocket(sock);
+    last_error_ = last_connect_error;
     return false;
   }
 
@@ -80,9 +104,19 @@ bool TcpClient::IsConnected() const {
 }
 #else
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cerrno>
+
+namespace {
+std::string StripBrackets(const std::string& host) {
+  if (host.size() >= 2 && host.front() == '[' && host.back() == ']') {
+    return host.substr(1, host.size() - 2);
+  }
+  return host;
+}
+}
 
 TcpClient::TcpClient() = default;
 
@@ -94,24 +128,39 @@ bool TcpClient::Connect(const std::string& host, uint16_t port) {
   Close();
   last_error_ = 0;
 
-  const int sock = socket(AF_INET, SOCK_STREAM, 0);
+  addrinfo hints{};
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+
+  addrinfo* result = nullptr;
+  const std::string host_name = StripBrackets(host);
+  const std::string port_str = std::to_string(port);
+  const int rc = getaddrinfo(host_name.c_str(), port_str.c_str(), &hints, &result);
+  if (rc != 0) {
+    last_error_ = rc;
+    return false;
+  }
+
+  int sock = -1;
+  int last_connect_error = 0;
+  for (addrinfo* ptr = result; ptr != nullptr; ptr = ptr->ai_next) {
+    sock = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+    if (sock < 0) {
+      last_connect_error = errno;
+      continue;
+    }
+    if (connect(sock, reinterpret_cast<sockaddr*>(ptr->ai_addr), ptr->ai_addrlen) == 0) {
+      break;
+    }
+    last_connect_error = errno;
+    close(sock);
+    sock = -1;
+  }
+  freeaddrinfo(result);
+
   if (sock < 0) {
-    last_error_ = errno;
-    return false;
-  }
-
-  sockaddr_in addr{};
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  if (inet_pton(AF_INET, host.c_str(), &addr.sin_addr) != 1) {
-    last_error_ = errno;
-    close(sock);
-    return false;
-  }
-
-  if (connect(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-    last_error_ = errno;
-    close(sock);
+    last_error_ = last_connect_error;
     return false;
   }
 
