@@ -76,6 +76,47 @@ Use this for:
 Include `` `r`n`` (carriage return + newline) for cmd.exe to execute the command.
 </Note>
 
+### Built-in UI Mode
+
+Launch the interactive text-based UI for managing multiple sessions:
+
+```powershell
+# Start the built-in UI
+./undying-terminal.exe --ui
+```
+
+**UI Commands:**
+
+```text
+add <name> <host> <port> <client_id> <passkey>    # Create a profile
+set-tunnel <name> <spec>                          # Configure port forwarding
+set-flag <name> <noexit|tunnel-only|predictive-echo> <on|off>  # Set options
+start <name>                                       # Launch a session
+stop <name>                                        # Stop a running session
+remove <name>                                      # Delete a profile
+list                                               # Show all profiles
+help                                               # Show commands
+quit                                               # Exit UI
+```
+
+**Example Session:**
+
+```text
+ut-ui> add dev 127.0.0.1 2022 abc123 mypasskey
+Profile 'dev' added
+
+ut-ui> set-flag dev predictive-echo on
+Flag 'predictive-echo' set to 'on' for profile 'dev'
+
+ut-ui> start dev
+started 'dev' (pid=12345)
+
+ut-ui> list
+- dev host=127.0.0.1 port=2022 running=yes tunnel-only=off predictive-echo=on
+
+ut-ui> quit
+```
+
 ### SSH Bootstrap (Remote Servers)
 
 ```powershell
@@ -83,9 +124,16 @@ Include `` `r`n`` (carriage return + newline) for cmd.exe to execute the command
 ./undying-terminal.exe --ssh user@remote-server.com -l username
 ```
 
+**With Tmux Integration:**
+
+```powershell
+# Auto-attach to tmux session (creates if doesn't exist)
+./undying-terminal.exe --ssh user@remote-server.com -l username --tmux --tmux-session mysession
+```
+
 This:
 1. SSHs to remote server
-2. Starts `undying-terminal-terminal` there
+2. Starts `undying-terminal-terminal` there (optionally inside tmux)
 3. Extracts credentials
 4. Switches to direct TCP connection
 5. Keeps session alive forever
@@ -183,9 +231,30 @@ python train-model.py  # Takes 6 hours
 
 ## Session Management
 
-### Multiple Sessions
+### Built-in UI Multi-Session (v1.1.0+)
 
-Run multiple independent sessions:
+The easiest way to manage multiple sessions is with the built-in UI:
+
+```powershell
+# Launch the UI
+./undying-terminal.exe --ui
+
+# Create profiles for different environments
+ut-ui> add dev localhost 2022 dev-id dev-key
+ut-ui> add prod prod-server.com 2022 prod-id prod-key
+ut-ui> add staging staging-server.com 2022 staging-id staging-key
+
+# Start any session
+ut-ui> start dev
+
+# Switch between sessions by stopping one and starting another
+ut-ui> stop dev
+ut-ui> start prod
+```
+
+### Traditional Multiple Sessions
+
+Run multiple independent sessions manually:
 
 <CodeGroup>
 ```powershell Session 1: Development
@@ -238,6 +307,72 @@ Prod Session:
 <Warning>
 **Exiting the shell** (e.g., `exit` or `Ctrl+D`) will **terminate the terminal process**. This ends the session! Use client disconnect instead.
 </Warning>
+
+## Advanced Features
+
+### Predictive Echo (v1.1.0+)
+
+Enable local echo prediction for high-latency connections:
+
+```powershell
+# Direct connection with predictive echo
+./undying-terminal.exe `
+  --connect <HOST> <PORT> <CLIENT_ID> `
+  --key <PASSKEY> `
+  --predictive-echo `
+  --noexit
+
+# SSH bootstrap with predictive echo
+./undying-terminal.exe --ssh user@remote --predictive-echo
+```
+
+**When to use:**
+- Connections with >100ms latency
+- Satellite or cellular networks
+- International connections
+
+**How it works:**
+- Characters appear instantly (local echo)
+- Server output reconciles with local echo
+- No duplicate characters visible
+
+### Tunnel-Only Mode (v1.1.0+)
+
+Run port forwarding without terminal overhead:
+
+```powershell
+# Forward ports without interactive shell
+./undying-terminal.exe `
+  --connect <HOST> <PORT> <CLIENT_ID> `
+  --key <PASSKEY> `
+  -t 5432:db-server:5432 `
+  -t 6379:redis:6379 `
+  --tunnel-only
+```
+
+**Use cases:**
+- Database tunneling
+- API proxy connections
+- Secure access to internal services
+- CI/CD pipeline integration
+
+### IPv6 Support (v1.1.0+)
+
+Connect to IPv6 hosts:
+
+```powershell
+# IPv6 address
+./undying-terminal.exe --connect 2001:db8::1 2022 <ID> --key <KEY>
+
+# IPv6 with SSH bootstrap
+./undying-terminal.exe --ssh user@[2001:db8::1] -l username
+
+# IPv6 tunnels
+./undying-terminal.exe `
+  --connect <HOST> <PORT> <ID> `
+  --key <KEY> `
+  -t "[::1]:8080:[2001:db8::1]:80"
+```
 
 ## Disconnecting vs. Exiting
 
