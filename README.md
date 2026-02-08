@@ -225,7 +225,17 @@ $env:UT_DEBUG_HANDSHAKE=1
 ./undying-terminal.exe --connect ...
 ```
 
-## recent additions (v1.0.1)
+## recent additions (v1.1.0)
+
+- **built-in terminal ui** (`--ui`) for managing multiple sessions
+- **multi-session support** with named profiles and concurrent processes
+- **ipv6 support** for future-proof networking
+- **predictive echo** (`--predictive-echo`) for high-latency connections
+- **tmux integration** (`--tmux`, `--tmux-session`) for seamless tmux workflows
+- **tunnel-only mode** (`--tunnel-only`) for port forwarding without terminal overhead
+- **static linking** - executables no longer require external DLLs
+
+### v1.0.1
 
 - ssh config parsing (`~/.ssh/config`) with support for:
   - `HostName`, `User`, `Port`, `IdentityFile`
