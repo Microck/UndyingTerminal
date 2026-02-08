@@ -99,6 +99,12 @@ this starts a remote terminal over ssh, then connects to the local server.
 ./undying-terminal.exe --ssh <host> -l <user>
 ```
 
+tmux integration (for tmux-capable remote hosts):
+
+```powershell
+./undying-terminal.exe --ssh <host> -l <user> --tmux --tmux-session devshell
+```
+
 more: https://undyingterminal.mintlify.app/guides/ssh-bootstrap
 
 ## build from source
@@ -162,6 +168,30 @@ reverse tunnels
 - `-r/--reversetunnel`: server listens; when hit, it requests the client to connect to a destination and shuttles data.
 
 more: https://undyingterminal.mintlify.app/guides/port-forwarding
+
+## built-in ui and multi-session
+
+you can run a built-in text UI from the client executable:
+
+```powershell
+./undying-terminal.exe --ui
+```
+
+inside the UI, create and manage multiple sessions:
+
+```text
+add <name> <host> <port> <client_id> <passkey>
+start <name>
+list
+```
+
+## predictive echo
+
+for high-latency links, enable local predictive echo on connect:
+
+```powershell
+./undying-terminal.exe --connect <host> <port> <client_id> --key <passkey> --predictive-echo --noexit
+```
 
 ## config
 

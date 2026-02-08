@@ -30,6 +30,7 @@ std::wstring GetPipeName() {
 }
 int main(int argc, char** argv) {
   bool jump_mode = false;
+  bool tunnel_only = false;
   std::wstring command = L"cmd.exe";
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
@@ -37,6 +38,8 @@ int main(int argc, char** argv) {
       command = L"powershell.exe";
     } else if (arg == "--jump") {
       jump_mode = true;
+    } else if (arg == "--tunnel-only") {
+      tunnel_only = true;
     }
   }
 
@@ -214,6 +217,19 @@ int main(int argc, char** argv) {
     }
     if (dest_to_pipe.joinable()) {
       dest_to_pipe.join();
+    }
+    pipe_handler.Close(pipe);
+    return 0;
+  }
+
+  if (tunnel_only) {
+    ut::Packet packet;
+    while (pipe_handler.ReadPacket(pipe, &packet)) {
+      if (DebugHandshake()) {
+        std::cerr << "[handshake] tunnel_only pipe_packet header="
+                  << static_cast<int>(packet.header())
+                  << " bytes=" << packet.payload().size() << "\n";
+      }
     }
     pipe_handler.Close(pipe);
     return 0;
