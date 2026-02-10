@@ -124,11 +124,15 @@ export default function Home() {
 
   // Simulate terminal loading state
   useEffect(() => {
+    if (reducedMotion) {
+      setIsTerminalLoading(false);
+      return;
+    }
     const timer = setTimeout(() => {
       setIsTerminalLoading(false);
     }, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [reducedMotion]);
 
   // Stop the WebGL background when hero isn't visible (prevents scroll jank).
   useEffect(() => {
@@ -149,6 +153,7 @@ export default function Home() {
 
   // Hero entrance + terminal timeline.
   useEffect(() => {
+    if (isTerminalLoading) return;
     if (reducedMotion) {
       setStatus("connected");
       const term = terminalBodyRef.current;
@@ -382,7 +387,7 @@ export default function Home() {
     return () => {
       ctx.revert();
     };
-  }, [reducedMotion, setStatus, typeText]);
+  }, [isTerminalLoading, reducedMotion, setStatus, typeText]);
 
   // Cascading scroll reveals for the rest of the page.
   useEffect(() => {
@@ -542,7 +547,7 @@ export default function Home() {
                 text={TITLE_TEXT}
                 disabled={false}
                 speed={2.8}
-                className={`${GeistPixelSquare.className} hero-title-pixel-heavy`}
+                className={`${GeistPixelSquare.className} hero-title-pixel-shine`}
               />
             )}
           </h1>
