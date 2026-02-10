@@ -196,6 +196,26 @@ This will:
 SSH bootstrap is perfect for remote development servers. After initial setup, your session survives network changes!
 </Tip>
 
+### Tmux Integration (v1.1.0+)
+
+For servers with tmux installed, auto-attach to a tmux session:
+
+```powershell
+./undying-terminal.exe --ssh user@remote-server.com -l username --tmux --tmux-session myproject
+```
+
+This combines Undying Terminal's network resilience with tmux's session persistence.
+
+### Predictive Echo (v1.1.0+)
+
+For high-latency connections, enable local echo:
+
+```powershell
+./undying-terminal.exe --ssh user@remote-server.com -l username --predictive-echo
+```
+
+Characters appear instantly while typing, improving responsiveness on slow networks.
+
 ## Configuration File (Optional)
 
 Create a config file for persistent settings:
@@ -217,6 +237,32 @@ New-Item -ItemType Directory -Force -Path $configDir
 ```
 </CodeGroup>
 
+## Built-in UI (v1.1.0+)
+
+For managing multiple sessions, use the built-in UI:
+
+```powershell
+./undying-terminal.exe --ui
+```
+
+**Example workflow:**
+
+```text
+ut-ui> add dev localhost 2022 <client_id> <passkey>
+ut-ui> add prod prod-server.com 2022 <client_id> <passkey>
+ut-ui> start dev
+ut-ui> list
+- dev host=localhost port=2022 running=yes
+- prod host=prod-server.com port=2022 running=no
+ut-ui> quit
+```
+
+The UI makes it easy to manage multiple environments without remembering complex commands.
+
+<Card title="Learn More" icon="window-maximize" href="/guides/built-in-ui">
+  Full guide to the built-in UI
+</Card>
+
 ## Next Steps
 
 <CardGroup cols={2}>
@@ -237,11 +283,11 @@ New-Item -ItemType Directory -Force -Path $configDir
   </Card>
   
   <Card
-    title="Configuration"
-    icon="gear"
-    href="/config/server-config"
+    title="Built-in UI"
+    icon="window-maximize"
+    href="/guides/built-in-ui"
   >
-    Customize server and client behavior
+    Manage multiple sessions interactively
   </Card>
   
   <Card

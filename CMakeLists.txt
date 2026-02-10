@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(undying_terminal VERSION 1.0.0 LANGUAGES CXX)
+project(undying_terminal VERSION 1.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(MINGW)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+endif()
 
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -20,14 +25,14 @@ option(UNDYING_TERMINAL_REQUIRE_DEPS "Require crypto/protobuf dependencies" ${_u
 
 set(UNDYING_TERMINAL_MINGW64_PREFIX "" CACHE PATH "MSYS2 mingw64 prefix (eg C:/msys64/mingw64)")
 
-set(ET_PROTO_SRCS
-  build/ET.pb.cc
-  build/ETerminal.pb.cc
+set(UT_PROTO_SRCS
+  build/UT.pb.cc
+  build/UTerminal.pb.cc
 )
 
-set(ET_PROTO_HDRS
-  build/ET.pb.h
-  build/ETerminal.pb.h
+set(UT_PROTO_HDRS
+  build/UT.pb.h
+  build/UTerminal.pb.h
 )
 
 if(UNDYING_TERMINAL_REQUIRE_DEPS)
@@ -71,25 +76,26 @@ add_executable(undying_terminal
   src/ut/MockServer.cpp
   src/ut/PseudoTerminalConsole.cpp
   src/ut/ReconnectionManager.cpp
-  src/ut/et/BackedReader.cpp
-  src/ut/et/BackedWriter.cpp
-  src/ut/et/ClientConnection.cpp
-  src/ut/et/Connection.cpp
-  src/ut/et/CryptoHandler.cpp
-  src/ut/et/PipeSocketHandler.cpp
-  src/ut/et/PortForwardHandler.cpp
-  src/ut/et/ServerClientConnection.cpp
-  src/ut/et/SocketHandler.cpp
-  src/ut/et/TcpSocketHandler.cpp
-  src/ut/et/TunnelUtils.cpp
+  src/ut/SshConfig.cpp
+  src/ut/protocol/BackedReader.cpp
+  src/ut/protocol/BackedWriter.cpp
+  src/ut/protocol/ClientConnection.cpp
+  src/ut/protocol/Connection.cpp
+  src/ut/protocol/CryptoHandler.cpp
+  src/ut/protocol/PipeSocketHandler.cpp
+  src/ut/protocol/PortForwardHandler.cpp
+  src/ut/protocol/ServerClientConnection.cpp
+  src/ut/protocol/SocketHandler.cpp
+  src/ut/protocol/TcpSocketHandler.cpp
+  src/ut/protocol/TunnelUtils.cpp
   src/ut/SshCommandBuilder.cpp
   src/ut/SshSubprocess.cpp
   src/ut/TcpClient.cpp
   src/ut/WinsockContext.cpp
   src/ut/WindowsPaths.cpp
   src/ut/Config.cpp
-  ${ET_PROTO_SRCS}
-  ${ET_PROTO_HDRS}
+  ${UT_PROTO_SRCS}
+  ${UT_PROTO_HDRS}
 )
 set_target_properties(undying_terminal PROPERTIES OUTPUT_NAME "undying-terminal")
 
@@ -101,7 +107,7 @@ target_compile_definitions(undying_terminal PRIVATE UNDYING_TERMINAL_VERSION="${
 
 target_include_directories(undying_terminal PRIVATE
   src/ut
-  src/ut/et
+  src/ut/protocol
   ${CMAKE_CURRENT_SOURCE_DIR}/build
   ${CMAKE_CURRENT_SOURCE_DIR}/proto
 )
@@ -127,16 +133,16 @@ add_executable(undying_terminal_terminal
   src/utterminal/ConPTYSession.cpp
   src/utterminal/NamedPipeClient.cpp
   src/ut/PseudoTerminalConsole.cpp
-  src/ut/et/BackedReader.cpp
-  src/ut/et/BackedWriter.cpp
-  src/ut/et/ClientConnection.cpp
-  src/ut/et/Connection.cpp
-  src/ut/et/CryptoHandler.cpp
-  src/ut/et/SocketHandler.cpp
-  src/ut/et/PipeSocketHandler.cpp
-  src/ut/et/TcpSocketHandler.cpp
-  ${ET_PROTO_SRCS}
-  ${ET_PROTO_HDRS}
+  src/ut/protocol/BackedReader.cpp
+  src/ut/protocol/BackedWriter.cpp
+  src/ut/protocol/ClientConnection.cpp
+  src/ut/protocol/Connection.cpp
+  src/ut/protocol/CryptoHandler.cpp
+  src/ut/protocol/SocketHandler.cpp
+  src/ut/protocol/PipeSocketHandler.cpp
+  src/ut/protocol/TcpSocketHandler.cpp
+  ${UT_PROTO_SRCS}
+  ${UT_PROTO_HDRS}
 )
 set_target_properties(undying_terminal_terminal PROPERTIES OUTPUT_NAME "undying-terminal-terminal")
 
@@ -148,7 +154,7 @@ target_compile_definitions(undying_terminal_terminal PRIVATE UNDYING_TERMINAL_VE
 
 target_include_directories(undying_terminal_terminal PRIVATE
   src/ut
-  src/ut/et
+  src/ut/protocol
   src/utterminal
   ${CMAKE_CURRENT_SOURCE_DIR}/build
   ${CMAKE_CURRENT_SOURCE_DIR}/proto
@@ -180,22 +186,22 @@ add_executable(undying_terminal_server
   src/utserver/Verbose.cpp
   src/utserver/Server.cpp
   src/utserver/WindowsService.cpp
-  src/ut/et/BackedReader.cpp
-  src/ut/et/BackedWriter.cpp
-  src/ut/et/Connection.cpp
-  src/ut/et/CryptoHandler.cpp
-  src/ut/et/PipeSocketHandler.cpp
-  src/ut/et/PortForwardHandler.cpp
-  src/ut/et/ServerClientConnection.cpp
-  src/ut/et/SocketHandler.cpp
-  src/ut/et/TcpSocketHandler.cpp
-  src/ut/et/TunnelUtils.cpp
+  src/ut/protocol/BackedReader.cpp
+  src/ut/protocol/BackedWriter.cpp
+  src/ut/protocol/Connection.cpp
+  src/ut/protocol/CryptoHandler.cpp
+  src/ut/protocol/PipeSocketHandler.cpp
+  src/ut/protocol/PortForwardHandler.cpp
+  src/ut/protocol/ServerClientConnection.cpp
+  src/ut/protocol/SocketHandler.cpp
+  src/ut/protocol/TcpSocketHandler.cpp
+  src/ut/protocol/TunnelUtils.cpp
   src/ut/WinsockContext.cpp
   src/ut/CryptoUtils.cpp
   src/ut/Config.cpp
   src/ut/WindowsPaths.cpp
-  ${ET_PROTO_SRCS}
-  ${ET_PROTO_HDRS}
+  ${UT_PROTO_SRCS}
+  ${UT_PROTO_HDRS}
 )
 set_target_properties(undying_terminal_server PROPERTIES OUTPUT_NAME "undying-terminal-server")
 
@@ -207,7 +213,7 @@ target_compile_definitions(undying_terminal_server PRIVATE UNDYING_TERMINAL_VERS
 
 target_include_directories(undying_terminal_server PRIVATE
   src/ut
-  src/ut/et
+  src/ut/protocol
   src/utserver
   ${CMAKE_CURRENT_SOURCE_DIR}/build
   ${CMAKE_CURRENT_SOURCE_DIR}/proto
@@ -269,6 +275,13 @@ if(UNDYING_TERMINAL_BUILD_TESTS)
   )
   target_include_directories(ssh_command_builder_test PRIVATE src/ut)
   add_test(NAME ssh_command_builder_test COMMAND ssh_command_builder_test)
+
+  add_executable(ssh_config_test
+    tests/ssh_config_test.cpp
+    src/ut/SshConfig.cpp
+  )
+  target_include_directories(ssh_config_test PRIVATE src/ut)
+  add_test(NAME ssh_config_test COMMAND ssh_config_test)
 
   add_executable(windows_paths_test
     tests/windows_paths_test.cpp

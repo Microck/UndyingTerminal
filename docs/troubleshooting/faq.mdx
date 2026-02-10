@@ -34,8 +34,7 @@ Unlike traditional SSH, it implements:
 **Use SSH when**:
 - Network is stable
 - Quick one-off commands
-- Need SSH agent forwarding (not yet supported)
-- Need SSH config file support (not yet supported)
+- Need features not yet supported by Undying Terminal
 
 ### Is this production-ready?
 
@@ -49,27 +48,15 @@ Unlike traditional SSH, it implements:
 - Optional encryption (XSalsa20)
 
 **Known Limitations**:
--  Windows-only (Linux/macOS planned)
--  No SSH config parsing
--  No SSH agent forwarding
--  Server doesn't clean up on pipe disconnect
-
-See [Roadmap](#roadmap) for planned features.
+-  Windows-only
 
 ### Can I use this on Linux or macOS?
 
-**Not yet**. Currently Windows-only due to ConPTY dependency.
+No. Undying Terminal binaries are Windows executables.
 
-**Planned**:
-- Linux: Server + terminal components (Q2 2024)
-- macOS: Server + terminal components (Q3 2024)
-
-**Current Workaround**:
-- Run server on Windows
-- Connect from Linux/macOS using SSH bootstrap:
-  ```bash
-  ssh user@windows-server "cd /path && ./undying-terminal-terminal.exe"
-  ```
+If you need to use it from a non-Windows machine, the practical options are:
+- Use RDP/Remote Desktop into a Windows machine and run the client there
+- Run a Windows VM and run the client there
 
 ### What does "undying" mean?
 
@@ -489,7 +476,7 @@ constexpr auto kKeepaliveInterval = std::chrono::seconds(5);
 // Change to desired interval
 ```
 
-**Future**: Config file option planned.
+There is no config file option for this currently.
 
 ### How does the recovery buffer work?
 
@@ -508,33 +495,12 @@ Each connection maintains:
 
 ### Can I run the client on Linux?
 
-**Via SSH bootstrap**: Yes
-
-```bash
-# Linux client connecting to Windows server
-ssh user@windows-server "cd /path && ./undying-terminal-terminal.exe"
-```
-
-**Native Linux client**: Not yet (planned Q2 2024)
+No. The client is Windows-only.
 
 ## Roadmap
 
-### What's planned for future releases?
-
-**v1.1 (Q1 2024)**:
-- SSH config parsing (ProxyJump, LocalForward)
-- Server cleanup on pipe disconnect
-- Configurable keepalive interval
-
-**v1.2 (Q2 2024)**:
-- Linux server + terminal support
-- SSH agent forwarding
-- Compression (optional)
-
-**v2.0 (Q3 2024)**:
-- macOS support
-- AEAD encryption (authenticated)
-- Multi-server clustering
+There is no published roadmap. If you want to propose changes or new features, please open an issue:
+https://github.com/Microck/UndyingTerminal/issues
 
 **Community requests**: [GitHub Issues](https://github.com/Microck/UndyingTerminal/issues)
 
@@ -553,7 +519,7 @@ See [Contributing Guide](/development/contributing).
 
 ### Where can I get support?
 
-**Documentation**: https://undyingterminal.dev  
+**Documentation**: https://undyingterminal.mintlify.app/  
 **GitHub Issues**: https://github.com/Microck/UndyingTerminal/issues  
 
 **Before asking**:

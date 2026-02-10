@@ -1,0 +1,386 @@
+---
+title: Built-in UI
+description: Using the interactive text-based UI for session management
+---
+
+## What is the Built-in UI?
+
+The built-in UI provides an interactive text-based interface for managing multiple Undying Terminal sessions from a single client instance.
+
+**Before v1.1.0:** Each session required a separate terminal window and manual credential tracking.
+
+**With v1.1.0+:** Launch the UI and manage all your sessions from one place.
+
+## Launching the UI
+
+```powershell
+./undying-terminal.exe --ui
+```
+
+You'll see the UI prompt:
+
+```text
+Undying Terminal built-in UI
+Built-in UI commands:
+  help
+  add <name> <host> <port> <client_id> <passkey>
+  set-tunnel <name> <spec>
+  set-flag <name> <noexit|tunnel-only|predictive-echo> <on|off>
+  start <name>
+  stop <name>
+  remove <name>
+  list
+  quit
+ut-ui>
+```
+
+## UI Commands
+
+### `add` - Create a Session Profile
+
+Create a named profile with connection details:
+
+```text
+ut-ui> add dev localhost 2022 abc123 mysecretkey
+Profile 'dev' added
+
+ut-ui> add prod prod-server.com 2022 xyz789 productionkey
+Profile 'prod' added
+```
+
+**Parameters:**
+- `name` - Unique profile name
+- `host` - Server hostname or IP address
+- `port` - Server port (usually 2022)
+- `client_id` - Client ID from terminal
+- `passkey` - Passkey from terminal
+
+### `set-tunnel` - Configure Port Forwarding
+
+Add tunnel specifications to a profile:
+
+```text
+ut-ui> set-tunnel dev 5432:db-server:5432
+Tunnel '5432:db-server:5432' added to profile 'dev'
+
+ut-ui> set-tunnel prod 8080:internal-api:80
+Tunnel '8080:internal-api:80' added to profile 'prod'
+```
+
+**Tunnel Format:** `local_port:remote_host:remote_port`
+
+### `set-flag` - Configure Options
+
+Enable/disable session options:
+
+```text
+ut-ui> set-flag dev noexit on
+Flag 'noexit' set to 'on' for profile 'dev'
+
+ut-ui> set-flag prod predictive-echo on
+Flag 'predictive-echo' set to 'on' for profile 'prod'
+
+ut-ui> set-flag prod tunnel-only on
+Flag 'tunnel-only' set to 'on' for profile 'prod'
+```
+
+**Available Flags:**
+- `noexit` - Keep session alive after command execution
+- `predictive-echo` - Enable local echo for high-latency connections
+- `tunnel-only` - Port forwarding without terminal (v1.1.0+)
+
+### `start` - Launch a Session
+
+Start a session in a new console window:
+
+```text
+ut-ui> start dev
+started 'dev' (pid=12345)
+
+ut-ui> start prod
+started 'prod' (pid=12346)
+```
+
+<Note>
+Each session runs in its own console window. Switch between sessions via your taskbar or Alt+Tab.
+</Note>
+
+### `stop` - Stop a Running Session
+
+Gracefully terminate a session:
+
+```text
+ut-ui> stop dev
+stopped 'dev'
+```
+
+<Warning>
+This terminates the process. Any running commands in that session will be interrupted.
+</Warning>
+
+### `remove` - Delete a Profile
+
+Remove a profile from the UI:
+
+```text
+ut-ui> remove dev
+removed profile 'dev'
+```
+
+<Note>
+You must stop a session before removing its profile.
+</Note>
+
+### `list` - Show All Profiles
+
+View all profiles and their status:
+
+```text
+ut-ui> list
+- dev host=localhost port=2022 running=yes tunnel-only=off predictive-echo=off
+- prod host=prod-server.com port=2022 running=no tunnel-only=off predictive-echo=on
+```
+
+### `help` - Show Available Commands
+
+```text
+ut-ui> help
+Built-in UI commands:
+  help
+  add <name> <host> <port> <client_id> <passkey>
+  set-tunnel <name> <spec>
+  set-flag <name> <noexit|tunnel-only|predictive-echo> <on|off>
+  start <name>
+  stop <name>
+  remove <name>
+  list
+  quit
+```
+
+### `quit` - Exit the UI
+
+```text
+ut-ui> quit
+```
+
+<Note>
+Quitting the UI does **not** stop running sessions. They continue in their own windows.
+</Note>
+
+## Complete Workflow Example
+
+**Scenario:** Managing dev, staging, and production environments.
+
+```text
+# Launch UI
+./undying-terminal.exe --ui
+
+# Create profiles
+ut-ui> add dev localhost 2022 dev-client-id dev-passkey
+ut-ui> add staging staging.example.com 2022 staging-id staging-key
+ut-ui> add prod prod.example.com 2022 prod-id prod-key
+
+# Configure tunnels for database access
+ut-ui> set-tunnel dev 5432:localhost:5432
+ut-ui> set-tunnel staging 5433:staging-db:5432
+ut-ui> set-tunnel prod 5434:prod-db:5432
+
+# Enable predictive echo for remote connections
+ut-ui> set-flag staging predictive-echo on
+ut-ui> set-flag prod predictive-echo on
+
+# Start development session
+ut-ui> start dev
+started 'dev' (pid=12345)
+
+# Work in dev, then switch to staging
+ut-ui> stop dev
+stopped 'dev'
+ut-ui> start staging
+started 'staging' (pid=12346)
+
+# View all profiles
+ut-ui> list
+- dev host=localhost port=2022 running=no tunnel-only=off predictive-echo=off
+- staging host=staging.example.com port=2022 running=yes tunnel-only=off predictive-echo=on
+- prod host=prod.example.com port=2022 running=no tunnel-only=off predictive-echo=on
+
+# Exit UI (sessions continue running)
+ut-ui> quit
+```
+
+## Tips and Best Practices
+
+### Profile Naming
+
+Use clear, consistent naming:
+
+```text
+# Good
+ut-ui> add web-prod web-server.com 2022 ...
+ut-ui> add api-prod api-server.com 2022 ...
+ut-ui> add db-prod db-server.com 2022 ...
+
+# Avoid
+ut-ui> add server1 ...  # Unclear which server
+ut-ui> add test ...     # Which environment?
+```
+
+### Secure Credential Storage
+
+The UI stores credentials in memory only (not on disk). For security:
+
+1. **Use environment variables for sensitive data:**
+
+```powershell
+# Set credentials in environment
+$env:DEV_CLIENT_ID = "abc123"
+$env:DEV_PASSKEY = "secretkey"
+
+# Then reference them when adding profiles
+ut-ui> add dev localhost 2022 %DEV_CLIENT_ID% %DEV_PASSKEY%
+```
+
+2. **Consider a password manager integration:**
+
+```powershell
+# Use 1Password CLI
+$Cred = op item get "Undying Terminal Dev" --fields username,password
+$ClientID = $Cred[0]
+$Passkey = $Cred[1]
+
+./undying-terminal.exe --ui
+# Then paste values
+```
+
+### Session Persistence
+
+Running sessions survive UI restart:
+
+```text
+# Start sessions
+ut-ui> start dev
+ut-ui> start prod
+ut-ui> quit
+
+# Later - sessions still running
+./undying-terminal.exe --ui
+ut-ui> list
+- dev host=localhost port=2022 running=yes ...
+- prod host=prod.example.com port=2022 running=yes ...
+```
+
+<Note>
+Profiles are stored in memory and lost when the UI exits. For persistent profiles, consider creating a startup script.
+</Note>
+
+### Automation with Scripts
+
+Create a PowerShell script to pre-populate profiles:
+
+```powershell
+# setup-ui.ps1
+$Profiles = @(
+    @{ Name = "dev"; Host = "localhost"; Port = 2022; ID = "dev123"; Key = "devkey" },
+    @{ Name = "staging"; Host = "staging.example.com"; Port = 2022; ID = "staging456"; Key = "stagingkey" }
+)
+
+# Start UI with commands
+$Commands = $Profiles | ForEach-Object {
+    "add $($_.Name) $($_.Host) $($_.Port) $($_.ID) $($_.Key)"
+}
+
+# Save to file for manual input or use Expect-like automation
+$Commands | Out-File setup-commands.txt
+
+Write-Host "Run: ./undying-terminal.exe --ui"
+Write-Host "Then paste commands from setup-commands.txt"
+```
+
+## Comparison: UI vs Direct Connection
+
+| Feature | Direct Connection | Built-in UI |
+|---------|------------------|-------------|
+| Setup | Command-line arguments | Interactive prompts |
+| Multiple sessions | Multiple terminals | Single UI, multiple windows |
+| Credential management | Manual tracking | Named profiles |
+| Tunnel configuration | Command-line | `set-tunnel` command |
+| Best for | One-off connections | Daily workflows |
+| Learning curve | Lower (familiar CLI) | Higher (new commands) |
+
+## Troubleshooting
+
+### "profile is not running"
+
+```text
+ut-ui> stop dev
+profile is not running
+```
+
+**Cause:** Trying to stop a session that isn't active.
+
+**Solution:** Check `list` to see which profiles are running.
+
+### "stop failed: TerminateProcess error 5"
+
+```text
+ut-ui> stop dev
+stop failed: TerminateProcess error 5
+```
+
+**Cause:** Access denied (session may have already exited or requires elevated permissions).
+
+**Solution:** 
+- Check if the session window closed manually
+- Run the UI as Administrator if needed
+
+### "stop session before removing"
+
+```text
+ut-ui> remove dev
+stop session before removing
+```
+
+**Cause:** Attempting to remove a profile with a running session.
+
+**Solution:**
+```text
+ut-ui> stop dev
+ut-ui> remove dev
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Basic Usage"
+    icon="terminal"
+    href="/basic-usage"
+  >
+    Learn more about session management
+  </Card>
+  
+  <Card
+    title="SSH Bootstrap"
+    icon="lock"
+    href="/guides/ssh-bootstrap"
+  >
+    Connect to remote servers
+  </Card>
+  
+  <Card
+    title="Port Forwarding"
+    icon="right-left"
+    href="/guides/port-forwarding"
+  >
+    Configure tunnels for your profiles
+  </Card>
+  
+  <Card
+    title="Tmux Integration"
+    icon="window-restore"
+    href="/guides/ssh-bootstrap#tmux-integration"
+  >
+    Combine with tmux for maximum persistence
+  </Card>
+</CardGroup>

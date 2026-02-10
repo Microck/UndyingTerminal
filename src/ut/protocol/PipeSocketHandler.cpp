@@ -21,6 +21,23 @@ bool PipeSocketHandler::HasData(SocketHandle socket) {
 #endif
 }
 
+bool PipeSocketHandler::IsConnected(SocketHandle socket) {
+#ifdef _WIN32
+  if (socket == kInvalidSocket) {
+    return false;
+  }
+  DWORD available = 0;
+  if (PeekNamedPipe(reinterpret_cast<HANDLE>(socket), nullptr, 0, nullptr, &available, nullptr)) {
+    return true;
+  }
+  const DWORD err = GetLastError();
+  return err != ERROR_BROKEN_PIPE && err != ERROR_PIPE_NOT_CONNECTED && err != ERROR_INVALID_HANDLE;
+#else
+  (void)socket;
+  return false;
+#endif
+}
+
 int PipeSocketHandler::Read(SocketHandle socket, void* buf, size_t count) {
 #ifdef _WIN32
   if (socket == kInvalidSocket) {

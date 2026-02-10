@@ -556,9 +556,190 @@ Manual bootstrap over Remote Desktop:
         var: terminal_output.stdout
 ```
 
+## Tmux Integration (v1.1.0+)
+
+Automatically wrap remote sessions in tmux for enhanced persistence:
+
+### Basic Tmux Usage
+
+```powershell
+# Attach to default tmux session (creates if doesn't exist)
+./undying-terminal.exe --ssh user@remote-server.com -l username --tmux
+
+# Attach to named tmux session
+./undying-terminal.exe --ssh user@remote-server.com -l username --tmux --tmux-session dev
+
+# Full example with all options
+./undying-terminal.exe `
+  --ssh user@remote-server.com `
+  -l username `
+  --tmux `
+  --tmux-session myproject `
+  --predictive-echo
+```
+
+### Why Use Tmux?
+
+**Tmux + Undying Terminal = Maximum Persistence**
+
+| Feature | Undying Terminal Alone | Tmux + Undying Terminal |
+|---------|----------------------|------------------------|
+| Network drops | Session survives | Session survives |
+| Client disconnect | Session survives | Session survives |
+| Terminal crashes | Session survives | Session survives |
+| Shell exits | Session ends | Tmux preserves session |
+| Multiple windows | One terminal | Multiple tmux windows |
+| Scrollback | Client-side only | Server-side preserved |
+
+### Tmux Workflow Examples
+
+**Development Session:**
+
+```powershell
+# Connect with tmux
+./undying-terminal.exe --ssh dev-server -l dev --tmux --tmux-session coding
+
+# Inside tmux:
+# Ctrl+b c    - Create new window
+# Ctrl+b n    - Next window  
+# Ctrl+b p    - Previous window
+# Ctrl+b d    - Detach (leave session running)
+```
+
+**Persistent Build Process:**
+
+```powershell
+# Start long build in tmux
+./undying-terminal.exe --ssh build-server -l ci --tmux --tmux-session build
+
+# Inside session:
+cd /project
+make clean && make -j8  # Takes 2 hours
+
+# Disconnect: Ctrl+b d
+# Undying Terminal reconnects automatically
+# Tmux keeps build running even if terminal crashes
+```
+
+**Multiple Projects:**
+
+```powershell
+# Project A
+./undying-terminal.exe --ssh server -l user --tmux --tmux-session project-a
+
+# Project B (different session)
+./undying-terminal.exe --ssh server -l user --tmux --tmux-session project-b
+
+# Each session is isolated with its own windows and state
+```
+
+### Tmux Commands Reference
+
+Once inside a tmux session:
+
+| Command | Action |
+|---------|--------|
+| `Ctrl+b c` | Create new window |
+| `Ctrl+b n` | Next window |
+| `Ctrl+b p` | Previous window |
+| `Ctrl+b ,` | Rename window |
+| `Ctrl+b d` | Detach (session keeps running) |
+| `Ctrl+b %` | Split vertically |
+| `Ctrl+b "` | Split horizontally |
+| `tmux ls` | List sessions (in shell) |
+| `tmux attach -t name` | Attach to specific session |
+
+<Note>
+**Tmux must be installed on the remote server.** Install with your package manager:
+- Ubuntu/Debian: `apt install tmux`
+- CentOS/RHEL: `yum install tmux`
+- macOS: `brew install tmux`
+</Note>
+
 ## Next Steps
 
 - Configure [Port Forwarding](/guides/port-forwarding) for secure tunnels
 - Set up [Jumphost](/guides/jumphost) access for complex networks
 - Install as [Windows Service](/guides/windows-service) for automatic startup
 - Review [Server Configuration](/config/server-config) options
+- Learn about [Built-in UI](/guides/built-in-ui) for multi-session management
+
+## SSH Config File Support
+
+Undying Terminal automatically reads your SSH config file (`~/.ssh/config` on Windows: `%USERPROFILE%\.ssh\config`) when using SSH bootstrap mode.
+
+### Supported Directives
+
+| Directive | Description |
+|-----------|-------------|
+| `HostName` | Real hostname/IP to connect to (resolves aliases) |
+| `User` | Default SSH username |
+| `Port` | Custom SSH port |
+| `IdentityFile` | Path to SSH private key |
+| `ProxyJump` | Jump through intermediate hosts |
+| `LocalForward` | Port forwarding (applied to Undying Terminal tunnels) |
+| `ForwardAgent` | Enable SSH agent forwarding |
+
+### Example SSH Config
+
+```
+# ~/.ssh/config
+Host myserver
+    HostName 192.168.1.100
+    User admin
+    Port 2222
+    IdentityFile ~/.ssh/id_myserver
+    LocalForward 5432 localhost:5432
+
+Host prod
+    HostName prod.example.com
+    User deploy
+    ProxyJump jumphost.example.com
+    ForwardAgent yes
+```
+
+### Using SSH Config with Undying Terminal
+
+```powershell
+# Uses settings from ~/.ssh/config for "myserver" host alias
+./undying-terminal.exe --ssh myserver
+
+# Uses ProxyJump from config for "prod" host
+./undying-terminal.exe --ssh prod
+```
+
+### Config Options
+
+#### `--ssh-config <PATH>`
+
+Specify a custom SSH config file path instead of the default.
+
+```powershell
+./undying-terminal.exe --ssh myserver --ssh-config C:\custom\ssh_config
+```
+
+#### `--no-ssh-config`
+
+Disable SSH config file parsing entirely.
+
+```powershell
+./undying-terminal.exe --ssh user@192.168.1.100 --no-ssh-config
+```
+
+### SSH Agent Forwarding
+
+#### `-A, --ssh-agent`
+
+Enable SSH agent forwarding (passes your local SSH keys to the remote session).
+
+```powershell
+./undying-terminal.exe --ssh myserver -A
+```
+
+#### `--no-ssh-agent`
+
+Explicitly disable SSH agent forwarding (overrides config file setting).
+
+```powershell
+./undying-terminal.exe --ssh myserver --no-ssh-agent
+```

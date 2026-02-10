@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "ETerminal.pb.h"
+#include "UTerminal.pb.h"
 
 namespace ut {
 class TunnelParseException : public std::exception {
@@ -15,6 +15,6 @@ class TunnelParseException : public std::exception {
   std::string message_;
 };
 
-std::vector<et::PortForwardSourceRequest> ParseRangesToRequests(const std::string& input);
+std::vector<ut::PortForwardSourceRequest> ParseRangesToRequests(const std::string& input);
 std::vector<std::string> ParseSshTunnelArg(const std::string& input);
 }

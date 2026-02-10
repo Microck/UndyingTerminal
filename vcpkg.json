@@ -2,8 +2,11 @@
   "name": "undying-terminal",
   "version-string": "0.1.0",
   "dependencies": [
-    "openssl",
+    "abseil",
     "libsodium",
-    "protobuf"
+    "openssl",
+    "protobuf",
+    "utf8-range",
+    "zlib"
   ]
 }

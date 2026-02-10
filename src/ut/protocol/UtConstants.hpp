@@ -1,6 +1,6 @@
 #pragma once
  
-namespace et {
+namespace ut {
 constexpr int kProtocolVersion = 6;
 constexpr unsigned char kClientServerNonceMsb = 0;
 constexpr unsigned char kServerClientNonceMsb = 1;

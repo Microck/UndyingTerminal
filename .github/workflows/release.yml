@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: windows-latest
@@ -12,57 +15,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-protobuf
-            mingw-w64-ucrt-x86_64-libsodium
-            zip
+      - name: Install vcpkg
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg $env:VCPKG_ROOT
+          & $env:VCPKG_ROOT\bootstrap-vcpkg.bat
 
       - name: Configure CMake
-        shell: msys2 {0}
+        shell: pwsh
         run: |
-          cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_COMPILER=g++ \
-            -DCMAKE_C_COMPILER=gcc
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DUNDYING_TERMINAL_REQUIRE_DEPS=ON `
+            -DUNDYING_TERMINAL_BUILD_TESTS=ON
 
       - name: Build
-        shell: msys2 {0}
+        shell: pwsh
         run: cmake --build build --config Release
 
       - name: Run Tests
-        shell: msys2 {0}
-        run: ctest --test-dir build --output-on-failure
+        shell: pwsh
+        run: ctest --test-dir build -C Release --output-on-failure
 
       - name: Get version
         id: version
-        shell: bash
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        shell: pwsh
+        run: "echo VERSION=$($env:GITHUB_REF -replace 'refs/tags/v','') >> $env:GITHUB_OUTPUT"
 
       - name: Package release
-        shell: msys2 {0}
+        shell: pwsh
         run: |
-          mkdir -p release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64
-          cp build/undying-terminal.exe release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
-          cp build/undying-terminal-server.exe release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
-          cp build/undying-terminal-terminal.exe release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
-          cp LICENSE release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
-          cp README.md release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/
-          # Copy runtime DLLs
-          ldd build/undying-terminal.exe | grep ucrt64 | awk '{print $3}' | xargs -I{} cp {} release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64/ 2>/dev/null || true
-          cd release && zip -r undying-terminal-${{ steps.version.outputs.VERSION }}-win64.zip undying-terminal-${{ steps.version.outputs.VERSION }}-win64
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $releaseDir = "release/undying-terminal-$version-win64"
+          New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+          Copy-Item build/Release/undying-terminal.exe $releaseDir
+          Copy-Item build/Release/undying-terminal-server.exe $releaseDir
+          Copy-Item build/Release/undying-terminal-terminal.exe $releaseDir
+          Copy-Item LICENSE $releaseDir
+          Copy-Item README.md $releaseDir
+          Compress-Archive -Path $releaseDir -DestinationPath "release/undying-terminal-$version-win64.zip" -Force
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: release/undying-terminal-${{ steps.version.outputs.VERSION }}-win64.zip
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
