@@ -176,48 +176,8 @@ body {
     0 -0.65px rgba(255, 255, 255, 0.35);
 }
 
-/* Heavier fill for shiny stage (no stroke so gradient is visible) */
-.hero-title-pixel-shine {
-  font-weight: 900;
-  letter-spacing: 0.01em;
-  text-shadow:
-    0 0 1px rgba(255, 255, 255, 0.9),
-    0 0 3px rgba(255, 255, 255, 0.45),
-    0.9px 0 rgba(255, 255, 255, 0.35),
-    -0.9px 0 rgba(255, 255, 255, 0.35),
-    0 0.9px rgba(255, 255, 255, 0.25),
-    0 -0.9px rgba(255, 255, 255, 0.25);
-}
-
 .hero-title-encrypted {
   color: rgba(232, 230, 227, 0.45);
-}
-
-/* Shiny text animation (CSS-driven for reliability) */
-.shiny-text {
-  background-image: linear-gradient(
-    var(--shiny-spread, 120deg),
-    var(--shiny-color, #b5b5b5) 0%,
-    var(--shiny-color, #b5b5b5) 35%,
-    var(--shiny-shine, #ffffff) 50%,
-    var(--shiny-color, #b5b5b5) 65%,
-    var(--shiny-color, #b5b5b5) 100%
-  );
-  background-size: 200% auto;
-  background-position: 150% center;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-@keyframes shiny-text-move {
-  0% {
-    background-position: 150% center;
-  }
-  100% {
-    background-position: -50% center;
-  }
 }
 
 /* ── Background layers ── */
