@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import {
+  motion,
+  useMotionValue,
+  useAnimationFrame,
+  useTransform,
+} from "motion/react";
 
 export interface ShinyTextProps {
   text: string;
@@ -30,30 +36,68 @@ export const ShinyText: React.FC<ShinyTextProps> = ({
   delay = 0,
 }) => {
   const [isPaused, setIsPaused] = useState(false);
-  const style = useMemo(() => {
-    const duration = Math.max(0.2, speed);
-    const delaySeconds = Math.max(0, delay);
-    const playState = disabled || isPaused ? "paused" : "running";
-    const dir = direction === "left" ? "normal" : "reverse";
+  const progress = useMotionValue(0);
+  const elapsedRef = useRef(0);
+  const lastTimeRef = useRef<number | null>(null);
+  const directionRef = useRef(direction === "left" ? 1 : -1);
 
-    return {
-      // Custom properties consumed by globals.css
-      ["--shiny-duration" as any]: `${duration}s`,
-      ["--shiny-delay" as any]: `${delaySeconds}s`,
-      ["--shiny-spread" as any]: `${spread}deg`,
-      ["--shiny-color" as any]: color,
-      ["--shiny-shine" as any]: shineColor,
-      // Direct animation controls
-      animationPlayState: playState,
-      animationName: "shiny-text-move",
-      animationDuration: `${duration}s`,
-      animationDelay: `${delaySeconds}s`,
-      animationDirection: yoyo ? ("alternate" as const) : dir,
-      animationIterationCount: "infinite",
-      animationTimingFunction: "linear",
-      animationFillMode: "both",
-    } as React.CSSProperties;
-  }, [color, delay, direction, disabled, isPaused, shineColor, speed, spread, yoyo]);
+  const animationDuration = speed * 1000;
+  const delayDuration = delay * 1000;
+
+  useAnimationFrame((time) => {
+    if (disabled || isPaused) {
+      lastTimeRef.current = null;
+      return;
+    }
+
+    if (lastTimeRef.current === null) {
+      lastTimeRef.current = time;
+      return;
+    }
+
+    const deltaTime = time - lastTimeRef.current;
+    lastTimeRef.current = time;
+
+    elapsedRef.current += deltaTime;
+
+    if (yoyo) {
+      const cycleDuration = animationDuration + delayDuration;
+      const fullCycle = cycleDuration * 2;
+      const cycleTime = elapsedRef.current % fullCycle;
+
+      if (cycleTime < animationDuration) {
+        const p = (cycleTime / animationDuration) * 100;
+        progress.set(directionRef.current === 1 ? p : 100 - p);
+      } else if (cycleTime < cycleDuration) {
+        progress.set(directionRef.current === 1 ? 100 : 0);
+      } else if (cycleTime < cycleDuration + animationDuration) {
+        const reverseTime = cycleTime - cycleDuration;
+        const p = 100 - (reverseTime / animationDuration) * 100;
+        progress.set(directionRef.current === 1 ? p : 100 - p);
+      } else {
+        progress.set(directionRef.current === 1 ? 0 : 100);
+      }
+    } else {
+      const cycleDuration = animationDuration + delayDuration;
+      const cycleTime = elapsedRef.current % cycleDuration;
+
+      if (cycleTime < animationDuration) {
+        const p = (cycleTime / animationDuration) * 100;
+        progress.set(directionRef.current === 1 ? p : 100 - p);
+      } else {
+        progress.set(directionRef.current === 1 ? 100 : 0);
+      }
+    }
+  });
+
+  useEffect(() => {
+    directionRef.current = direction === "left" ? 1 : -1;
+    elapsedRef.current = 0;
+    progress.set(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [direction]);
+
+  const backgroundPosition = useTransform(progress, (p) => `${150 - p * 2}% center`);
 
   const handleMouseEnter = useCallback(() => {
     if (pauseOnHover) setIsPaused(true);
@@ -63,14 +107,23 @@ export const ShinyText: React.FC<ShinyTextProps> = ({
     if (pauseOnHover) setIsPaused(false);
   }, [pauseOnHover]);
 
+  const gradientStyle: React.CSSProperties = {
+    backgroundImage: `linear-gradient(${spread}deg, ${color} 0%, ${color} 35%, ${shineColor} 50%, ${color} 65%, ${color} 100%)`,
+    backgroundSize: "200% auto",
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    color: "transparent",
+  };
+
   return (
-    <span
-      className={`inline-block shiny-text ${className}`}
-      style={style}
+    <motion.span
+      className={`inline-block ${className}`}
+      style={{ ...gradientStyle, backgroundPosition }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {text}
-    </span>
+    </motion.span>
   );
 };
