@@ -46,11 +46,11 @@
   "rewrites": [
     {
       "source": "/docs",
-      "destination": "https://undyingterminal.mintlify.app/docs"
+      "destination": "https://undyingterminal.mintlify.dev/docs"
     },
     {
       "source": "/docs/(.*)",
-      "destination": "https://undyingterminal.mintlify.app/docs/$1"
+      "destination": "https://undyingterminal.mintlify.dev/docs/$1"
     }
   ],
   "buildCommand": "cd landing && npm install && npm run build",
