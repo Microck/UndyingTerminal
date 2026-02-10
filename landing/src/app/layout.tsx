@@ -38,6 +38,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script defer data-domain="undyingterminal.com" src="https://plausible.io/js/script.js"></script>
       </head>
       <body className="isolate">
         {children}

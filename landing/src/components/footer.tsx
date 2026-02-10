@@ -8,6 +8,7 @@ const links = [
   { title: "Releases", href: "https://github.com/Microck/UndyingTerminal/releases/latest", external: true },
   { title: "GitHub", href: "https://github.com/Microck/UndyingTerminal", external: true },
   { title: "FAQ", href: "#faq" },
+  { title: "Privacy", href: "/privacy" },
 ];
 
 export default function FooterSection() {

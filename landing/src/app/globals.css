@@ -165,12 +165,19 @@ body {
 .hero-title-pixel-heavy {
   font-weight: 900;
   letter-spacing: 0.01em;
-  -webkit-text-stroke: 0.45px rgba(255, 255, 255, 0.48);
+  -webkit-text-stroke: 0.65px rgba(255, 255, 255, 0.58);
+  paint-order: stroke fill;
   text-shadow:
-    0 0 0.8px rgba(255, 255, 255, 0.95),
-    0 0 1.6px rgba(255, 255, 255, 0.45),
-    0.45px 0 rgba(255, 255, 255, 0.35),
-    -0.45px 0 rgba(255, 255, 255, 0.35);
+    0 0 1px rgba(255, 255, 255, 0.95),
+    0 0 2px rgba(255, 255, 255, 0.55),
+    0.65px 0 rgba(255, 255, 255, 0.45),
+    -0.65px 0 rgba(255, 255, 255, 0.45),
+    0 0.65px rgba(255, 255, 255, 0.35),
+    0 -0.65px rgba(255, 255, 255, 0.35);
+}
+
+.hero-title-encrypted {
+  color: rgba(232, 230, 227, 0.45);
 }
 
 /* ── Background layers ── */

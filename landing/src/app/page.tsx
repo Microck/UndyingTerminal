@@ -9,7 +9,9 @@ import Features from "@/components/features-1";
 import FAQs from "@/components/faqs";
 import FooterSection from "@/components/footer";
 import { LightRays } from "@/components/ui/light-rays";
+import DecryptedText from "@/components/ui/decrypted-text";
 import { ShinyText } from "@/components/ui/shiny-text";
+import { TerminalSkeleton } from "@/components/terminal-skeleton";
 import SmoothDropdown from "@/components/smooth-dropdown";
 
 gsap.registerPlugin(TextPlugin);
@@ -60,6 +62,12 @@ export default function Home() {
   });
 
   const [threadsActive, setThreadsActive] = useState(false);
+  const [heroDecryptDone, setHeroDecryptDone] = useState(false);
+  const [isTerminalLoading, setIsTerminalLoading] = useState(true);
+
+  const handleHeroDecryptDone = useCallback(() => {
+    setHeroDecryptDone(true);
+  }, []);
 
   const setStatus = useCallback(
     (status: "connected" | "disconnected" | "reconnecting") => {
@@ -112,6 +120,14 @@ export default function Home() {
     onChange();
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
+  }, []);
+
+  // Simulate terminal loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsTerminalLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
   }, []);
 
   // Stop the WebGL background when hero isn't visible (prevents scroll jank).
@@ -510,12 +526,25 @@ export default function Home() {
             ref={heroTitleRef}
             className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight"
           >
-            <ShinyText
-              text={TITLE_TEXT}
-              disabled={reducedMotion}
-              speed={2.8}
-              className={`text-foreground hero-title-pixel-heavy ${GeistPixelSquare.className}`}
-            />
+            {!heroDecryptDone ? (
+              <DecryptedText
+                text={TITLE_TEXT}
+                speed={40}
+                maxIterations={1}
+                sequential
+                animateOn="view"
+                onComplete={handleHeroDecryptDone}
+                className={`${GeistPixelSquare.className} hero-title-pixel-heavy`}
+                encryptedClassName={`${GeistPixelSquare.className} hero-title-encrypted hero-title-pixel-heavy`}
+              />
+            ) : (
+              <ShinyText
+                text={TITLE_TEXT}
+                disabled={false}
+                speed={2.8}
+                className={`${GeistPixelSquare.className} hero-title-pixel-heavy`}
+              />
+            )}
           </h1>
 
           <div className="mt-4 mb-8 h-px bg-white/10 overflow-hidden">
@@ -529,70 +558,76 @@ export default function Home() {
             ref={terminalContainerRef}
             className="w-full"
           >
-            <div
-              ref={glitchContainerRef}
-              className="glitch-container terminal-window grid grid-cols-[minmax(100px,140px)_1fr] sm:grid-cols-[minmax(120px,160px)_1fr] w-full"
-            >
-              <div ref={flashRef} className="terminal-flash" />
-
-              {/* Status rail */}
-              <div className="border-r border-white/5 bg-[rgba(255,255,255,0.02)] p-2 sm:p-3 font-mono text-[11px] leading-5 text-muted-foreground">
-                <div className="mb-3 text-[10px] uppercase tracking-wider text-foreground">
-                  STATUS
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span ref={statusRef} className="status-dot connected" />
-                  <span ref={statusTextRef}>Connected</span>
-                </div>
-
-                <div className="mt-3">
-                  <div ref={rttRef}>rtt: n/a</div>
-                  <div ref={retriesRef}>retries: 0</div>
-                  <div ref={bufferRef}>buffer: persisted</div>
-                </div>
-              </div>
-
-              {/* Terminal */}
-              <div className="min-w-0">
-                <div className="terminal-header">
-                  <span className="text-muted-foreground">UT://</span>
-                  <span className="text-foreground">prod/deploy</span>
-                  <span className="text-muted-foreground">transport:</span>
-                  <span className="text-foreground">ssh</span>
-                  <div className="flex-1" />
-                  <span className="text-muted-foreground">session:persist</span>
-                </div>
-
+            {isTerminalLoading ? (
+              <TerminalSkeleton />
+            ) : (
+              <>
                 <div
-                  ref={terminalBodyRef}
-                  className="terminal-body glitch-text"
-                  data-text=""
-                />
-              </div>
-            </div>
+                  ref={glitchContainerRef}
+                  className="glitch-container terminal-window grid grid-cols-[minmax(100px,140px)_1fr] sm:grid-cols-[minmax(120px,160px)_1fr] w-full"
+                >
+                  <div ref={flashRef} className="terminal-flash" />
 
-            <div ref={ctaRef} className="flex flex-wrap gap-4 mt-8">
-              <a
-                href="https://github.com/Microck/UndyingTerminal/releases/latest"
-                className="btn-primary"
-              >
-                <img
-                  src="/windows-logo.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-5 w-5"
-                />
-                Download for Windows
-              </a>
-              <a href="https://undyingterminal.com/docs/quickstart" className="btn-secondary">
-                Quick Start
-              </a>
-            </div>
+                  {/* Status rail */}
+                  <div className="border-r border-white/5 bg-[rgba(255,255,255,0.02)] p-2 sm:p-3 font-mono text-[11px] leading-5 text-muted-foreground">
+                    <div className="mb-3 text-[10px] uppercase tracking-wider text-foreground">
+                      STATUS
+                    </div>
 
-            <p ref={versionRef} className="text-sm text-muted-foreground mt-5">
-              Windows 10 build 17763+ &middot; MIT License
-            </p>
+                    <div className="flex items-center gap-2">
+                      <span ref={statusRef} className="status-dot connected" />
+                      <span ref={statusTextRef}>Connected</span>
+                    </div>
+
+                    <div className="mt-3">
+                      <div ref={rttRef}>rtt: n/a</div>
+                      <div ref={retriesRef}>retries: 0</div>
+                      <div ref={bufferRef}>buffer: persisted</div>
+                    </div>
+                  </div>
+
+                  {/* Terminal */}
+                  <div className="min-w-0">
+                    <div className="terminal-header">
+                      <span className="text-muted-foreground">UT://</span>
+                      <span className="text-foreground">prod/deploy</span>
+                      <span className="text-muted-foreground">transport:</span>
+                      <span className="text-foreground">ssh</span>
+                      <div className="flex-1" />
+                      <span className="text-muted-foreground">session:persist</span>
+                    </div>
+
+                    <div
+                      ref={terminalBodyRef}
+                      className="terminal-body glitch-text"
+                      data-text=""
+                    />
+                  </div>
+                </div>
+
+                <div ref={ctaRef} className="flex flex-wrap gap-4 mt-8">
+                  <a
+                    href="https://github.com/Microck/UndyingTerminal/releases/latest"
+                    className="btn-primary"
+                  >
+                    <img
+                      src="/windows-logo.png"
+                      alt=""
+                      aria-hidden="true"
+                      className="h-5 w-5"
+                    />
+                    Download for Windows
+                  </a>
+                  <a href="https://undyingterminal.com/docs/quickstart" className="btn-secondary">
+                    Quick Start
+                  </a>
+                </div>
+
+                <p ref={versionRef} className="text-sm text-muted-foreground mt-5">
+                  Windows 10 build 17763+ &middot; MIT License
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>
