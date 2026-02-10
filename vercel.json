@@ -1,12 +1,62 @@
 {
+  "version": 2,
+  "public": true,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(jpg|jpeg|gif|png|webp|svg|ico|css|js)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/docs",
       "destination": "https://undyingterminal.mintlify.dev/docs"
     },
     {
-      "source": "/docs/(.*)",
-      "destination": "https://undyingterminal.mintlify.dev/docs/$1"
+      "source": "/docs/:match*",
+      "destination": "https://undyingterminal.mintlify.dev/docs/:match*"
+    },
+    {
+      "source": "/",
+      "destination": "/landing/dist/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/landing/dist/$1"
     }
-  ]
+  ],
+  "buildCommand": "cd landing && npm install && npm run build",
+  "outputDirectory": "landing/dist"
 }
