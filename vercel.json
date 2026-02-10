@@ -30,10 +30,6 @@
         {
           "key": "Strict-Transport-Security",
           "value": "max-age=31536000; includeSubDomains; preload"
-        },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://undyingterminal.mintlify.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
         }
       ]
     },
@@ -53,16 +49,8 @@
       "destination": "https://undyingterminal.mintlify.app/docs"
     },
     {
-      "source": "/docs/:match*",
-      "destination": "https://undyingterminal.mintlify.app/docs/:match*"
-    },
-    {
-      "source": "/",
-      "destination": "/landing/dist/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/landing/dist/$1"
+      "source": "/docs/(.*)",
+      "destination": "https://undyingterminal.mintlify.app/docs/$1"
     }
   ],
   "buildCommand": "cd landing && npm install && npm run build",

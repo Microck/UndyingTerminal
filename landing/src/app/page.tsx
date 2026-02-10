@@ -65,6 +65,15 @@ export default function Home() {
   const [heroDecryptDone, setHeroDecryptDone] = useState(false);
   const [isTerminalLoading, setIsTerminalLoading] = useState(true);
 
+  // Fail-safe: if decrypt effect doesn't fire (e.g., IO edge-cases), switch to shiny.
+  useEffect(() => {
+    if (heroDecryptDone) return;
+    const t = setTimeout(() => {
+      setHeroDecryptDone(true);
+    }, 1600);
+    return () => clearTimeout(t);
+  }, [heroDecryptDone]);
+
   const handleHeroDecryptDone = useCallback(() => {
     setHeroDecryptDone(true);
   }, []);
@@ -547,6 +556,9 @@ export default function Home() {
                 text={TITLE_TEXT}
                 disabled={false}
                 speed={2.8}
+                color="#cfcfcf"
+                shineColor="#ffffff"
+                spread={110}
                 className={`${GeistPixelSquare.className} hero-title-pixel-shine`}
               />
             )}
